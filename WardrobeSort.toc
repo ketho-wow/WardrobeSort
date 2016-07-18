@@ -1,0 +1,9 @@
+## Interface: 70000
+## Version: 0.2
+## Title: WardrobeSort
+## Notes: Sorts the Wardrobe in alphabetical order
+## Author: Ketho @ EU-Boulderfist
+## LoadOnDemand: 1
+## LoadWith: Blizzard_Collections
+
+WardrobeSort.lua
