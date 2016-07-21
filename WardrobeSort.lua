@@ -5,8 +5,6 @@
 -- then what is the best way to just grab all visuals for the visual ids?
 
 -- could use savedvariables as cache to speed up sorting, but it's better left to a library
--- this addon is a complete and utter mess and uses like 2-8 MB of memory
-
 local f = CreateFrame("Frame")
 
 local visualAppearance, visualIllusion = {}, {}
@@ -43,6 +41,7 @@ function f:GetVisuals()
 		-- need to use WardrobeCollectionFrame_GetSortedAppearanceSources
 		-- otherwise cant get the used header name consistently
 		for k in pairs(cacheAppearance) do
+			-- oh my god so much garbage, uses like 2-8 MB of memory
 			local t = WardrobeCollectionFrame_GetSortedAppearanceSources(k)
 			if t[1].name then
 				visualAppearance[k] = t[1].name
@@ -69,7 +68,10 @@ function f:SortVisuals() -- finally we can sort
 	local visual = isApp and visualAppearance or visualIllusion
 	local idType = isApp and "visualID" or "sourceID"
 	
-	sort(WardrobeCollectionFrame.filteredVisualsList, function(source1, source2)
+	local list = WardrobeCollectionFrame.filteredVisualsList
+	if not list then return end -- if the wardrobe was closed while we were still caching
+	
+	sort(list, function(source1, source2)
 		if source1.isCollected ~= source2.isCollected then
 			return source1.isCollected
 		end
@@ -86,7 +88,8 @@ function f:SortVisuals() -- finally we can sort
 		local name1 = visual[source1[idType]]
 		local name2 = visual[source2[idType]]
 		
-		if name1 ~= name2 then
+		-- sometimes a name is nil, difficult to debug why
+		if name1 and name2 and name1 ~= name2 then
 			return name1 < name2 -- alphabetic
 		end
 		
