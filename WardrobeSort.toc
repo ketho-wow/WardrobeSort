@@ -1,5 +1,5 @@
-## Interface: 70000
-## Version: 0.2.1
+## Interface: 70100
+## Version: @project-version@
 ## Title: WardrobeSort
 ## Notes: Sorts the Wardrobe in alphabetical order
 ## Author: Ketho @ EU-Boulderfist
