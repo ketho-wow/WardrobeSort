@@ -1,105 +1,81 @@
 -- Author: Ketho (EU-Boulderfist)
 -- License: Public Domain
 
--- TRANSMOG_COLLECTION_ITEM_UPDATE doesnt have any return values for the respective in order to precache... 
--- then what is the best way to just grab all visuals for the visual ids?
-
--- could use savedvariables as cache to speed up sorting, but it's better left to a library
+-- TRANSMOG_COLLECTION_ITEM_UPDATE doesnt have any meaningful return values
 local f = CreateFrame("Frame")
+local WardRobe = WardrobeCollectionFrame.ItemsCollectionFrame
 
-local visualAppearance, visualIllusion = {}, {}
-local cacheAppearance, cacheIllusion = {}, {}
+local visuals, cache = {}, {}
 local completed = {}
 
-local function IsAppearance()
-	return (WardrobeCollectionFrame.transmogType == LE_TRANSMOG_TYPE_APPEARANCE)
-end
-
--- appearances/transmogs get the name via visualID
--- illusions/enchants get the name via sourceID
 local function CheckVisuals()
-	-- grab all our data first
-	if not completed[WardrobeCollectionFrame.activeSlot] then
-		local isApp = IsAppearance()
-		local cache = isApp and cacheAppearance or cacheIllusion
-		local idType = isApp and "visualID" or "sourceID"
-
-		for k, v in pairs(WardrobeCollectionFrame.filteredVisualsList) do
-			cache[v[idType]] = true -- queue data to be cached	
-		end
-		
-		f:SetScript("OnUpdate", f.GetVisuals)
-	else -- go ahead and sort
-		f:SortVisuals()
-	end
-end
-
--- takes around 30 onupdates
-function f:GetVisuals()
-	local isApp = IsAppearance()
-	if isApp then
-		-- need to use WardrobeCollectionFrame_GetSortedAppearanceSources
-		-- otherwise cant get the used header name consistently
-		for k in pairs(cacheAppearance) do
-			-- oh my god so much garbage, uses like 2-8 MB of memory
-			local t = WardrobeCollectionFrame_GetSortedAppearanceSources(k)
-			if t[1].name then
-				visualAppearance[k] = t[1].name
-				cacheAppearance[k] = nil -- remove
+	local category = WardRobe:GetActiveCategory()
+	if category then -- does not include enchants/illusions
+		if completed[category] then
+			f:SortVisuals()
+		else
+			local filteredVisualsList = WardRobe:GetFilteredVisualsList()
+			if #filteredVisualsList > 0 then -- the first time it will return an empty table
+				for _, v in pairs(filteredVisualsList) do
+					cache[v.visualID] = true -- queue data to be cached	
+				end
+				f:SetScript("OnUpdate", f.CacheNames)
 			end
 		end
-	else
-		for k in pairs(cacheIllusion) do
-			local _, name = C_TransmogCollection.GetIllusionSourceInfo(k)
-			visualIllusion[k] = name
-			cacheIllusion[k] = nil
+	end
+end
+
+-- takes around 5 to 30 onupdates
+function f:CacheNames()
+	for k in pairs(cache) do
+		-- oh my god so much garbage, uses like 2-8 MB of memory
+		local appearances = WardrobeCollectionFrame_GetSortedAppearanceSources(k)
+		if appearances[1].name then
+			visuals[k] = appearances[1].name
+			cache[k] = nil
 		end
 	end
-	-- got all visuals for the wardrobe slot
-	if not next(isApp and cacheAppearance or cacheIllusion) then
-		completed[WardrobeCollectionFrame.activeSlot] = true -- remember
+	
+	if not next(cache) then
+		completed[WardRobe:GetActiveCategory()] = true
 		self:SetScript("OnUpdate", nil)
 		self:SortVisuals()
 	end
 end
 
-function f:SortVisuals() -- finally we can sort
-	local isApp = IsAppearance()
-	local visual = isApp and visualAppearance or visualIllusion
-	local idType = isApp and "visualID" or "sourceID"
+function f:SortVisuals()
+	local filteredVisualsList = WardRobe:GetFilteredVisualsList()
 	
-	local list = WardrobeCollectionFrame.filteredVisualsList
-	if not list then return end -- if the wardrobe was closed while we were still caching
-	
-	sort(list, function(source1, source2)
-		if source1.isCollected ~= source2.isCollected then
-			return source1.isCollected
-		end
-		if source1.isUsable ~= source2.isUsable then
-			return source1.isUsable
-		end
-		if source1.isFavorite ~= source2.isFavorite then
-			return source1.isFavorite
-		end
-		if source1.isHideVisual ~= source2.isHideVisual then
-			return source1.isHideVisual
-		end
+	if filteredVisualsList then -- wardrobe can be closed while caching was in progress
+		sort(filteredVisualsList, function(source1, source2)
+			if source1.isCollected ~= source2.isCollected then
+				return source1.isCollected
+			end
+			if source1.isUsable ~= source2.isUsable then
+				return source1.isUsable
+			end
+			if source1.isFavorite ~= source2.isFavorite then
+				return source1.isFavorite
+			end
+			if source1.isHideVisual ~= source2.isHideVisual then
+				return source1.isHideVisual
+			end
+			
+			local name1 = visuals[source1.visualID]
+			local name2 = visuals[source2.visualID]
+			
+			if name1 and name2 and name1 ~= name2 then
+				return name1 < name2
+			end
+			
+			if source1.uiOrder and source2.uiOrder then
+				return source1.uiOrder > source2.uiOrder
+			end
+			return source1.sourceID > source2.sourceID
+		end)
 		
-		local name1 = visual[source1[idType]]
-		local name2 = visual[source2[idType]]
-		
-		-- sometimes a name is nil, difficult to debug why
-		if name1 and name2 and name1 ~= name2 then
-			return name1 < name2 -- alphabetic
-		end
-		
-		if source1.uiOrder and source2.uiOrder then
-			return source1.uiOrder > source2.uiOrder
-		end
-		return source1.sourceID > source2.sourceID
-	end)
-	
-	WardrobeCollectionFrame_Update() -- update
+		WardRobe:UpdateItems()
+	end
 end
 
-hooksecurefunc("WardrobeCollectionFrame_SortVisuals", CheckVisuals)
+hooksecurefunc(WardRobe, "SortVisuals", CheckVisuals)
