@@ -1,0 +1,8 @@
+## Interface: 70200
+## Title: WardrobeSortData
+## Version: 7.1.5
+## Author: Ketho
+## Notes: Load on Demand Wardrobe FileData
+## LoadOnDemand: 1
+
+FileData.lua

@@ -1,0 +1,4 @@
+package-as: WardrobeSort
+
+move-folders:
+  WardrobeSort/Data: WardrobeSortData

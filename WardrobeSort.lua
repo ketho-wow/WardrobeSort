@@ -1,81 +1,60 @@
 -- Author: Ketho (EU-Boulderfist)
 -- License: Public Domain
 
--- TRANSMOG_COLLECTION_ITEM_UPDATE doesnt have any meaningful return values
-local f = CreateFrame("Frame")
-local WardRobe = WardrobeCollectionFrame.ItemsCollectionFrame
-
-local visuals, cache = {}, {}
-local completed = {}
-
-local function CheckVisuals()
-	local category = WardRobe:GetActiveCategory()
-	if category then -- does not include enchants/illusions
-		if completed[category] then
-			f:SortVisuals()
+local function LoadFileData(addon)
+	local loaded, reason = LoadAddOn(addon)
+	if not loaded then
+		if reason == "DISABLED" then
+			EnableAddOn(addon, true)
+			LoadAddOn(addon)
 		else
-			local filteredVisualsList = WardRobe:GetFilteredVisualsList()
-			if #filteredVisualsList > 0 then -- the first time it will return an empty table
-				for _, v in pairs(filteredVisualsList) do
-					cache[v.visualID] = true -- queue data to be cached	
-				end
-				f:SetScript("OnUpdate", f.CacheNames)
-			end
+			error(addon.." is "..reason)
 		end
 	end
+	return _G[addon]:GetFileData()
 end
 
--- takes around 5 to 30 onupdates
-function f:CacheNames()
-	for k in pairs(cache) do
-		-- oh my god so much garbage, uses like 2-8 MB of memory
-		local appearances = WardrobeCollectionFrame_GetSortedAppearanceSources(k)
-		if appearances[1].name then
-			visuals[k] = appearances[1].name
-			cache[k] = nil
-		end
-	end
-	
-	if not next(cache) then
-		completed[WardRobe:GetActiveCategory()] = true
-		self:SetScript("OnUpdate", nil)
-		self:SortVisuals()
-	end
-end
+local active
 
-function f:SortVisuals()
-	local filteredVisualsList = WardRobe:GetFilteredVisualsList()
+-- only load when the wardrobe collections tab is used
+WardrobeCollectionFrame:HookScript("OnShow", function()
+	if active then
+		return
+	else
+		active = true
+	end
 	
-	if filteredVisualsList then -- wardrobe can be closed while caching was in progress
-		sort(filteredVisualsList, function(source1, source2)
-			if source1.isCollected ~= source2.isCollected then
-				return source1.isCollected
+	local visual = LoadFileData("WardrobeSortData")
+	local WardRobe = WardrobeCollectionFrame.ItemsCollectionFrame
+	
+	-- Sort
+	hooksecurefunc(WardRobe, "SortVisuals", function(self)
+		sort(self:GetFilteredVisualsList(), function(source1, source2)
+			if visual[source1.visualID] and visual[source2.visualID] then
+				return visual[source1.visualID] < visual[source2.visualID]
+			else
+				return source1.visualID < source2.visualID
 			end
-			if source1.isUsable ~= source2.isUsable then
-				return source1.isUsable
-			end
-			if source1.isFavorite ~= source2.isFavorite then
-				return source1.isFavorite
-			end
-			if source1.isHideVisual ~= source2.isHideVisual then
-				return source1.isHideVisual
-			end
-			
-			local name1 = visuals[source1.visualID]
-			local name2 = visuals[source2.visualID]
-			
-			if name1 and name2 and name1 ~= name2 then
-				return name1 < name2
-			end
-			
-			if source1.uiOrder and source2.uiOrder then
-				return source1.uiOrder > source2.uiOrder
-			end
-			return source1.sourceID > source2.sourceID
 		end)
-		
-		WardRobe:UpdateItems()
+	end)
+	
+	-- Show appearance information
+	for _, v in pairs(WardRobe.Models) do
+		v:HookScript("OnEnter", function()
+			if WardRobe:GetActiveCategory() then
+				if visual[v.visualInfo.visualID] then
+					GameTooltip:AddLine(visual[v.visualInfo.visualID])
+					GameTooltip:Show()
+				end
+			end
+		end)
 	end
-end
-
-hooksecurefunc(WardRobe, "SortVisuals", CheckVisuals)
+	
+	-- Update GameTooltip when scrollling
+	WardRobe:HookScript("OnMouseWheel", function()
+		local focus = GetMouseFocus()
+		if focus and focus:GetObjectType() == "DressUpModel" then
+			focus:GetScript("OnEnter")(focus)
+		end
+	end)
+end)

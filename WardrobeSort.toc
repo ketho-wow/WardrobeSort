@@ -1,7 +1,7 @@
 ## Interface: 70200
 ## Version: @project-version@
 ## Title: WardrobeSort
-## Notes: Sorts the Wardrobe in alphabetical order
+## Notes: Sorts the Wardrobe by appearance
 ## Author: Ketho @ EU-Boulderfist
 ## LoadOnDemand: 1
 ## LoadWith: Blizzard_Collections
