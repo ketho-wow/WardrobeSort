@@ -11,11 +11,6 @@ local nameVisuals, nameCache = {}, {}
 local catCompleted, itemLevels = {}, {}
 local unknown = {-1}
 
-local defaults = {
-	db_version = 1,
-	sortDropdown = LE_DEFAULT,
-}
-
 local LE_DEFAULT = 1
 local LE_APPEARANCE = 2
 local LE_ITEM_LEVEL = 3
@@ -26,6 +21,11 @@ local L = {
 	[LE_APPEARANCE] = APPEARANCE_LABEL,
 	[LE_ITEM_LEVEL] = STAT_AVERAGE_ITEM_LEVEL,
 	[LE_ALPHABETIC] = COMPACT_UNIT_FRAME_PROFILE_SORTBY_ALPHABETICAL,
+}
+
+local defaults = {
+	db_version = 1,
+	sortDropdown = LE_DEFAULT,
 }
 
 local function LoadFileData(addon)
