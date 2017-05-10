@@ -3,7 +3,12 @@
 ## Title: WardrobeSort
 ## Notes: Sorts the Wardrobe by appearance
 ## Author: Ketho @ EU-Boulderfist
+## SavedVariables: WardrobeSortDB
 ## LoadOnDemand: 1
 ## LoadWith: Blizzard_Collections
+
+Libs\NoTaint_UIDropDownMenu\UIDropDownMenuTemplates.xml
+Libs\NoTaint_UIDropDownMenu\UIDropDownMenu.lua
+Libs\NoTaint_UIDropDownMenu\EasyMenu.lua
 
 WardrobeSort.lua
