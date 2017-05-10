@@ -165,7 +165,7 @@ local function CreateDropdown()
 		info.func = function(self)
 			db.sortDropdown = self.value
 			Lib_UIDropDownMenu_SetSelectedValue(dropdown, self.value)
-			Lib_UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..self:GetText())
+			Lib_UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[self.value])
 			Wardrobe:SortVisuals()
 		end
 		
@@ -175,9 +175,10 @@ local function CreateDropdown()
 			Lib_UIDropDownMenu_AddButton(info)
 		end
 	end)
+	
 	-- apply db
 	Lib_UIDropDownMenu_SetSelectedValue(dropdown, db.sortDropdown)
-	Lib_UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..dropdown.Text:GetText())
+	Lib_UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[db.sortDropdown])
 	return dropdown
 end
 

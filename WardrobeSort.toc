@@ -1,7 +1,7 @@
 ## Interface: 70200
 ## Version: @project-version@
 ## Title: WardrobeSort
-## Notes: Sorts the Wardrobe by appearance
+## Notes: Sorts the Wardrobe
 ## Author: Ketho @ EU-Boulderfist
 ## SavedVariables: WardrobeSortDB
 ## LoadOnDemand: 1
