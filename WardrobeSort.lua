@@ -104,7 +104,7 @@ local sortFunc = {
 	
 	[LE_APPEARANCE] = function(self)
 		FileData = FileData or LoadFileData("WardrobeSortData")
-		sort(Wardrobe:GetFilteredVisualsList(), function(source1, source2)
+		sort(self:GetFilteredVisualsList(), function(source1, source2)
 			if FileData[source1.visualID] and FileData[source2.visualID] then
 				return FileData[source1.visualID]:lower() < FileData[source2.visualID]:lower()
 			else
@@ -115,25 +115,25 @@ local sortFunc = {
 	
 	[LE_ITEM_LEVEL] = function(self)
 		-- wardrobe can be closed while caching was in progress
-		if Wardrobe:IsVisible() then
-			sort(Wardrobe:GetFilteredVisualsList(), function(source1, source2)
+		if self:IsVisible() then
+			sort(self:GetFilteredVisualsList(), function(source1, source2)
 				local itemLevel1 = GetItemLevel(source1.visualID)
 				local itemLevel2 = GetItemLevel(source2.visualID)
 				
 				if itemLevel1 ~= itemLevel2 then
 					return itemLevel1 < itemLevel2
 				else
-					return source1.uiOrder < source2.uiOrder
+					return source1.visualID < source2.visualID
 				end
 			end)
 		end
 	end,
 	
 	[LE_ALPHABETIC] = function(self)
-		if catCompleted[Wardrobe:GetActiveCategory()] then
+		if catCompleted[self:GetActiveCategory()] then
 			SortAlphabetic()
 		else
-			for _, v in pairs(Wardrobe:GetFilteredVisualsList()) do
+			for _, v in pairs(self:GetFilteredVisualsList()) do
 				nameCache[v.visualID] = true -- queue data to be cached	
 			end
 			f:SetScript("OnUpdate", CacheHeaders)
@@ -169,7 +169,12 @@ end
 
 -- place differently for the transmogrifier / collections tab
 local function PositionDropDown()
-	WardRobeSortDropDown:SetPoint("TOPLEFT", Wardrobe.WeaponDropDown, "BOTTOMLEFT", 0, WardrobeFrame:IsShown() and 30 or 5)
+	if WardrobeFrame_IsAtTransmogrifier() then
+		local _, isWeapon = C_TransmogCollection.GetCategoryInfo(Wardrobe:GetActiveCategory() or -1)
+		WardRobeSortDropDown:SetPoint("TOPLEFT", Wardrobe.WeaponDropDown, "BOTTOMLEFT", 0, isWeapon and 55 or 32)
+	else
+		WardRobeSortDropDown:SetPoint("TOPLEFT", Wardrobe.WeaponDropDown, "BOTTOMLEFT", 0, 5)
+	end
 end
 
 local function CreateDropdown()
@@ -201,7 +206,7 @@ local function CreateDropdown()
 end
 
 -- only load once the wardrobe collections tab / transmogrifier is used
-Wardrobe:HookScript("OnShow", function()
+Wardrobe:HookScript("OnShow", function(self)
 	if active then
 		PositionDropDown()
 		return
@@ -221,11 +226,11 @@ Wardrobe:HookScript("OnShow", function()
 	PositionDropDown()
 	
 	-- sort and update
-	hooksecurefunc(Wardrobe, "SortVisuals", function(self)
+	hooksecurefunc(Wardrobe, "SortVisuals", function()
 		-- exclude enchants/illusions by checking for category
-		if Wardrobe:GetActiveCategory() then
+		if self:GetActiveCategory() then
 			sortFunc[db.sortDropdown](self)
-			Wardrobe:UpdateItems()
+			self:UpdateItems()
 			Lib_UIDropDownMenu_EnableDropDown(dropdown)
 		else
 			Lib_UIDropDownMenu_DisableDropDown(dropdown)
@@ -233,7 +238,7 @@ Wardrobe:HookScript("OnShow", function()
 	end)
 	
 	-- show appearance information in tooltip
-	for _, model in pairs(Wardrobe.Models) do
+	for _, model in pairs(self.Models) do
 		model:HookScript("OnEnter", Model_OnEnter)
 	end
 	
@@ -244,4 +249,6 @@ Wardrobe:HookScript("OnShow", function()
 			Model_OnEnter(focus)
 		end
 	end)
+	
+	hooksecurefunc(Wardrobe, "UpdateWeaponDropDown", PositionDropDown)
 end)
