@@ -71,9 +71,12 @@ end
 local function SortAlphabetic()
 	if Wardrobe:IsVisible() then
 		sort(Wardrobe:GetFilteredVisualsList(), function(source1, source2)
-			return nameVisuals[source1.visualID] < nameVisuals[source2.visualID]
+			if nameVisuals[source1.visualID] and nameVisuals[source2.visualID] then
+				return nameVisuals[source1.visualID] < nameVisuals[source2.visualID]
+			else
+				return source1.visualID < source2.visualID
+			end
 		end)
-		-- delayed sort, update again
 		Wardrobe:UpdateItems()
 	end
 end
@@ -149,6 +152,21 @@ local function SortItemLevelEvent()
 	end
 end
 
+local function Model_OnEnter(self)
+	if Wardrobe:GetActiveCategory() then
+		local selectedValue = Lib_UIDropDownMenu_GetSelectedValue(WardRobeSortDropDown)
+		if selectedValue == LE_APPEARANCE then
+			if FileData[self.visualInfo.visualID] then
+				GameTooltip:AddLine(FileData[self.visualInfo.visualID])
+			end
+		elseif selectedValue == LE_ITEM_LEVEL then
+			local avg_ilvl, min_ilvl, max_ilvl = GetItemLevel(self.visualInfo.visualID)
+			GameTooltip:AddLine(format(min_ilvl == max_ilvl and "%d" or "%d  [%d-%d]", avg_ilvl, min_ilvl, max_ilvl))
+		end
+		GameTooltip:Show()
+	end
+end
+
 -- place differently for the transmogrifier / collections tab
 local function PositionDropDown()
 	WardRobeSortDropDown:SetPoint("TOPLEFT", Wardrobe.WeaponDropDown, "BOTTOMLEFT", 0, WardrobeFrame:IsShown() and 30 or 5)
@@ -171,7 +189,7 @@ local function CreateDropdown()
 		
 		for index, name in ipairs(L) do
 			info.value, info.text = index, name
-			info.checked = (info.value == selectedValue)
+			info.checked = (index == selectedValue)
 			Lib_UIDropDownMenu_AddButton(info)
 		end
 	end)
@@ -191,7 +209,7 @@ Wardrobe:HookScript("OnShow", function()
 		active = true
 	end
 	
-	if not WardrobeSortDB or WardrobeSortDB.db_version < WardrobeSortDB.db_version then
+	if not WardrobeSortDB or WardrobeSortDB.db_version < defaults.db_version then
 		WardrobeSortDB = CopyTable(defaults)
 	end
 	db = WardrobeSortDB
@@ -215,28 +233,15 @@ Wardrobe:HookScript("OnShow", function()
 	end)
 	
 	-- show appearance information in tooltip
-	for _, v in pairs(Wardrobe.Models) do
-		v:HookScript("OnEnter", function()
-			if Wardrobe:GetActiveCategory() then
-				local selectedValue = Lib_UIDropDownMenu_GetSelectedValue(dropdown)
-				if selectedValue == LE_APPEARANCE then
-					if FileData[v.visualInfo.visualID] then
-						GameTooltip:AddLine(FileData[v.visualInfo.visualID])
-					end
-				elseif selectedValue == LE_ITEM_LEVEL then
-					local avg_ilvl, min_ilvl, max_ilvl = GetItemLevel(v.visualInfo.visualID)
-					GameTooltip:AddLine(format(min_ilvl == max_ilvl and "%d" or "%d  [%d-%d]", avg_ilvl, min_ilvl, max_ilvl))
-				end
-				GameTooltip:Show()
-			end
-		end)
+	for _, model in pairs(Wardrobe.Models) do
+		model:HookScript("OnEnter", Model_OnEnter)
 	end
 	
 	-- update tooltip when scrolling
 	Wardrobe:HookScript("OnMouseWheel", function()
 		local focus = GetMouseFocus()
 		if focus and focus:GetObjectType() == "DressUpModel" then
-			focus:GetScript("OnEnter")(focus)
+			Model_OnEnter(focus)
 		end
 	end)
 end)
