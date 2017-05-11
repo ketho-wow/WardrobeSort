@@ -246,9 +246,10 @@ Wardrobe:HookScript("OnShow", function(self)
 	Wardrobe:HookScript("OnMouseWheel", function()
 		local focus = GetMouseFocus()
 		if focus and focus:GetObjectType() == "DressUpModel" then
-			Model_OnEnter(focus)
+			focus:GetScript("OnEnter")(focus)
 		end
 	end)
 	
+	-- reposition when the weapons dropdown is shown at the transmogrifier
 	hooksecurefunc(Wardrobe, "UpdateWeaponDropDown", PositionDropDown)
 end)
