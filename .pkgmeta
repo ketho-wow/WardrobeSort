@@ -1,8 +1,9 @@
 package-as: WardrobeSort
 
 externals:
-  Libs/LibStub: svn://svn.wowace.com/wow/ace3/mainline/trunk/LibStub
-  Libs/NoTaint_UIDropDownMenu: svn://svn.wowinterface.com/NoTaint_UIDropDownMenu_Update-1134/trunk
+  Libs/NoTaint_UIDropDownMenu:
+    url: svn://svn.wowinterface.com/NoTaint_UIDropDownMenu_Update-1134/trunk
+    tag: latest
 
 move-folders:
   WardrobeSort/Data: WardrobeSortData
