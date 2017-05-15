@@ -9,9 +9,8 @@
 
 #@no-lib-strip@
 Libs\LibStub\LibStub.lua
-Libs\NoTaint_UIDropDownMenu\UIDropDownMenuTemplates.xml
-Libs\NoTaint_UIDropDownMenu\UIDropDownMenu.lua
-Libs\NoTaint_UIDropDownMenu\EasyMenu.lua
+Libs\NoTaint_UIDropDownMenu\UIDropDownMenu.xml
 #@end-no-lib-strip@
+
 
 WardrobeSort.lua
