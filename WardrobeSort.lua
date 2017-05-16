@@ -15,12 +15,18 @@ local LE_DEFAULT = 1
 local LE_APPEARANCE = 2
 local LE_ITEM_LEVEL = 3
 local LE_ALPHABETIC = 4
+local LE_ITEM_SOURCE = 5
+local LE_COLOR = 6
+
+local dropdownOrder = {LE_DEFAULT, LE_APPEARANCE, LE_COLOR, LE_ITEM_SOURCE, LE_ITEM_LEVEL, LE_ALPHABETIC}
 
 local L = {
 	[LE_DEFAULT] = DEFAULT,
 	[LE_APPEARANCE] = APPEARANCE_LABEL,
 	[LE_ITEM_LEVEL] = STAT_AVERAGE_ITEM_LEVEL,
 	[LE_ALPHABETIC] = COMPACT_UNIT_FRAME_PROFILE_SORTBY_ALPHABETICAL,
+	[LE_ITEM_SOURCE] = SOURCE:gsub(":", ""),
+	[LE_COLOR] = COLOR,
 }
 
 local defaults = {
@@ -28,18 +34,29 @@ local defaults = {
 	sortDropdown = LE_DEFAULT,
 }
 
-local function LoadFileData(addon)
-	local loaded, reason = LoadAddOn(addon)
-	if not loaded then
-		if reason == "DISABLED" then
-			EnableAddOn(addon, true)
-			LoadAddOn(addon)
-		else
-			error(addon..": "..reason)
-		end
-	end
-	return _G[addon]:GetFileData()
-end
+local colors = {
+	"red", -- 255, 0, 0
+	"crimson", -- 255, 0, 63
+	"maroon", -- 128, 0, 0
+	"pink", -- 255, 192, 203
+	"purple", -- 128, 0, 128
+	"indigo", -- 75, 0, 130
+	
+	"blue", -- 0, 0, 255
+	"teal", -- 0, 128, 128
+	
+	"green", -- 0, 255, 0
+	"yellow", -- 255, 255, 0
+	"gold", -- 255, 215, 0
+	"orange", -- 255, 128, 0
+	"brown", -- 128, 64, 0
+	
+	"black", -- 0, 0, 0
+	"gray", -- 128, 128, 128
+	"grey",
+	"silver", -- 192, 192, 192
+	"white", -- 255, 255, 255
+}
 
 local ItemCache = setmetatable({}, {__index = function(t, k)
 	wipe(itemLevels)
@@ -66,6 +83,19 @@ end})
 
 local function GetItemLevel(visualID)
 	return unpack(ItemCache[visualID])
+end
+
+local function LoadFileData(addon)
+	local loaded, reason = LoadAddOn(addon)
+	if not loaded then
+		if reason == "DISABLED" then
+			EnableAddOn(addon, true)
+			LoadAddOn(addon)
+		else
+			error(addon..": "..reason)
+		end
+	end
+	return _G[addon]:GetFileData()
 end
 
 local function SortAlphabetic()
@@ -114,8 +144,7 @@ local sortFunc = {
 	end,
 	
 	[LE_ITEM_LEVEL] = function(self)
-		-- wardrobe can be closed while caching was in progress
-		if self:IsVisible() then
+		if self:IsVisible() then -- check if wardrobe is still open after caching is finished
 			sort(self:GetFilteredVisualsList(), function(source1, source2)
 				local itemLevel1 = GetItemLevel(source1.visualID)
 				local itemLevel2 = GetItemLevel(source2.visualID)
@@ -139,6 +168,81 @@ local sortFunc = {
 			f:SetScript("OnUpdate", CacheHeaders)
 		end
 	end,
+	
+	[LE_ITEM_SOURCE] = function(self)
+		FileData = FileData or LoadFileData("WardrobeSortData")
+		sort(self:GetFilteredVisualsList(), function(source1, source2)
+			local item1 = WardrobeCollectionFrame_GetSortedAppearanceSources(source1.visualID)[1]
+			local item2 = WardrobeCollectionFrame_GetSortedAppearanceSources(source2.visualID)[1]
+			
+			if item1.sourceType and item2.sourceType then
+				if item1.sourceType == TRANSMOG_SOURCE_BOSS_DROP and item2.sourceType == item1.sourceType then
+					local drops1 = C_TransmogCollection.GetAppearanceSourceDrops(item1.sourceID)
+					local drops2 = C_TransmogCollection.GetAppearanceSourceDrops(item2.sourceID)
+					
+					if #drops1 > 0 and #drops2 > 0 then
+						local instance1, encounter1 = drops1[1].instance, drops1[1].encounter
+						local instance2, encounter2 = drops2[1].instance, drops2[1].encounter
+						
+						if instance1 == instance2 then
+							return encounter1 < encounter2
+						else
+							return instance1 < instance2
+						end
+					end
+				else
+					if item1.sourceType == item2.sourceType then
+						local file1 = FileData[source1.visualID]
+						local file2 = FileData[source2.visualID]
+						
+						if file1 and file2 then
+							return file1 > file2
+						else
+							return source1.visualID < source2.visualID
+						end
+					else
+						return item1.sourceType < item2.sourceType
+					end
+				end
+			end
+			return source1.visualID < source2.visualID
+		end)
+	end,
+	
+	-- sort by the color in filename
+	[LE_COLOR] = function(self)
+		FileData = FileData or LoadFileData("WardrobeSortData")
+		sort(self:GetFilteredVisualsList(), function(source1, source2)
+			local file1 = FileData[source1.visualID]
+			local file2 = FileData[source2.visualID]
+			
+			if file1 and file2 then
+				local index1 = #colors+1
+				for k, v in pairs(colors) do
+					if strfind(file1:lower(), v) then
+						index1 = k
+						break
+					end
+				end
+				
+				local index2 = #colors+1
+				for k, v in pairs(colors) do
+					if strfind(file2:lower(), v) then
+						index2 = k
+						break
+					end
+				end
+				
+				if index1 == index2 then
+					return file1 < file2
+				else
+					return index1 < index2
+				end
+			else
+				return source1.visualID < source2.visualID
+			end
+		end)
+	end,
 }
 
 -- sort again when we are sure all items are cached
@@ -155,7 +259,7 @@ end
 local function Model_OnEnter(self)
 	if Wardrobe:GetActiveCategory() then
 		local selectedValue = Lib_UIDropDownMenu_GetSelectedValue(WardRobeSortDropDown)
-		if selectedValue == LE_APPEARANCE then
+		if selectedValue == LE_APPEARANCE or selectedValue == LE_COLOR then
 			if FileData[self.visualInfo.visualID] then
 				GameTooltip:AddLine(FileData[self.visualInfo.visualID])
 			end
@@ -182,8 +286,8 @@ local function CreateDropdown()
 	Lib_UIDropDownMenu_SetWidth(dropdown, 140)
 	
 	Lib_UIDropDownMenu_Initialize(dropdown, function(self)
-		local selectedValue = Lib_UIDropDownMenu_GetSelectedValue(self)
 		local info = Lib_UIDropDownMenu_CreateInfo()
+		local selectedValue = Lib_UIDropDownMenu_GetSelectedValue(self)
 		
 		info.func = function(self)
 			db.sortDropdown = self.value
@@ -192,14 +296,13 @@ local function CreateDropdown()
 			Wardrobe:SortVisuals()
 		end
 		
-		for index, name in ipairs(L) do
-			info.value, info.text = index, name
-			info.checked = (index == selectedValue)
+		for _, id in pairs(dropdownOrder) do
+			info.value, info.text = id, L[id]
+			info.checked = (id == selectedValue)
 			Lib_UIDropDownMenu_AddButton(info)
 		end
 	end)
 	
-	-- apply db
 	Lib_UIDropDownMenu_SetSelectedValue(dropdown, db.sortDropdown)
 	Lib_UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[db.sortDropdown])
 	return dropdown

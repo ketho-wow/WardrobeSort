@@ -12,5 +12,4 @@ Libs\LibStub\LibStub.lua
 Libs\NoTaint_UIDropDownMenu\UIDropDownMenu.xml
 #@end-no-lib-strip@
 
-
 WardrobeSort.lua
