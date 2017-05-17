@@ -197,8 +197,6 @@ local sortFunc = {
 						
 						if file1 and file2 then
 							return file1 > file2
-						else
-							return source1.visualID < source2.visualID
 						end
 					else
 						return item1.sourceType < item2.sourceType
@@ -219,7 +217,7 @@ local sortFunc = {
 			if file1 and file2 then
 				local index1 = #colors+1
 				for k, v in pairs(colors) do
-					if strfind(file1:lower(), v) then
+					if strfind(file1, v) then
 						index1 = k
 						break
 					end
@@ -227,7 +225,7 @@ local sortFunc = {
 				
 				local index2 = #colors+1
 				for k, v in pairs(colors) do
-					if strfind(file2:lower(), v) then
+					if strfind(file2, v) then
 						index2 = k
 						break
 					end
