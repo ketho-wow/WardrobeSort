@@ -104,7 +104,7 @@ local function SortAlphabetic()
 			if nameVisuals[source1.visualID] and nameVisuals[source2.visualID] then
 				return nameVisuals[source1.visualID] < nameVisuals[source2.visualID]
 			else
-				return source1.visualID < source2.visualID
+				return source1.uiOrder < source2.uiOrder
 			end
 		end)
 		Wardrobe:UpdateItems()
@@ -136,9 +136,9 @@ local sortFunc = {
 		FileData = FileData or LoadFileData("WardrobeSortData")
 		sort(self:GetFilteredVisualsList(), function(source1, source2)
 			if FileData[source1.visualID] and FileData[source2.visualID] then
-				return FileData[source1.visualID]:lower() < FileData[source2.visualID]:lower()
+				return FileData[source1.visualID] < FileData[source2.visualID]
 			else
-				return source1.visualID < source2.visualID
+				return source1.uiOrder < source2.uiOrder
 			end
 		end)
 	end,
@@ -152,7 +152,7 @@ local sortFunc = {
 				if itemLevel1 ~= itemLevel2 then
 					return itemLevel1 < itemLevel2
 				else
-					return source1.visualID < source2.visualID
+					return source1.uiOrder < source2.uiOrder
 				end
 			end)
 		end
@@ -192,18 +192,15 @@ local sortFunc = {
 					end
 				else
 					if item1.sourceType == item2.sourceType then
-						local file1 = FileData[source1.visualID]
-						local file2 = FileData[source2.visualID]
-						
-						if file1 and file2 then
-							return file1 > file2
+						if FileData[source1.visualID] and FileData[source2.visualID] then
+							return FileData[source1.visualID] > FileData[source2.visualID]
 						end
 					else
 						return item1.sourceType < item2.sourceType
 					end
 				end
 			end
-			return source1.visualID < source2.visualID
+			return source1.uiOrder < source2.uiOrder
 		end)
 	end,
 	
@@ -237,7 +234,7 @@ local sortFunc = {
 					return index1 < index2
 				end
 			else
-				return source1.visualID < source2.visualID
+				return source1.uiOrder < source2.uiOrder
 			end
 		end)
 	end,
