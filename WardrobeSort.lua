@@ -269,6 +269,18 @@ local function Model_OnEnter(self)
 		elseif selectedValue == LE_ITEM_LEVEL then
 			local avg_ilvl, min_ilvl, max_ilvl = GetItemLevel(self.visualInfo.visualID)
 			GameTooltip:AddLine(format(min_ilvl == max_ilvl and "%d" or "%d  [%d-%d]", avg_ilvl, min_ilvl, max_ilvl))
+		elseif selectedValue == LE_ITEM_SOURCE then
+			if self.visualInfo.isCollected then
+				local item = WardrobeCollectionFrame_GetSortedAppearanceSources(self.visualInfo.visualID)[1]
+				if item.sourceType == TRANSMOG_SOURCE_BOSS_DROP then
+					local drops = C_TransmogCollection.GetAppearanceSourceDrops(item.sourceID)
+					if #drops > 0 then
+						GameTooltip:AddLine(_G["TRANSMOG_SOURCE_"..item.sourceType]..": "..format(WARDROBE_TOOLTIP_ENCOUNTER_SOURCE, drops[1].encounter, drops[1].instance))
+					end
+				elseif item.sourceType then
+					GameTooltip:AddLine(_G["TRANSMOG_SOURCE_"..item.sourceType])
+				end
+			end
 		end
 		GameTooltip:Show()
 	end
