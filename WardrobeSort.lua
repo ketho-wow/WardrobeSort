@@ -6,10 +6,12 @@ local Wardrobe = WardrobeCollectionFrame.ItemsCollectionFrame
 
 local db, active
 local FileData
+local modifier
 
 local nameVisuals, nameCache = {}, {}
 local catCompleted, itemLevels = {}, {}
 local unknown = {-1}
+local LegionWardrobeY = IsAddOnLoaded("LegionWardrobe") and 55 or 5
 
 local LE_DEFAULT = 1
 local LE_APPEARANCE = 2
@@ -98,13 +100,21 @@ local function LoadFileData(addon)
 	return _G[addon]:GetFileData()
 end
 
+local function SortOperator(a, b)
+	if modifier then
+		return a > b -- reverse sort
+	else
+		return a < b
+	end
+end
+
 local function SortAlphabetic()
 	if Wardrobe:IsVisible() then
 		sort(Wardrobe:GetFilteredVisualsList(), function(source1, source2)
 			if nameVisuals[source1.visualID] and nameVisuals[source2.visualID] then
-				return nameVisuals[source1.visualID] < nameVisuals[source2.visualID]
+				return SortOperator(nameVisuals[source1.visualID], nameVisuals[source2.visualID])
 			else
-				return source1.uiOrder < source2.uiOrder
+				return SortOperator(source1.uiOrder, source2.uiOrder)
 			end
 		end)
 		Wardrobe:UpdateItems()
@@ -136,9 +146,9 @@ local sortFunc = {
 		FileData = FileData or LoadFileData("WardrobeSortData")
 		sort(self:GetFilteredVisualsList(), function(source1, source2)
 			if FileData[source1.visualID] and FileData[source2.visualID] then
-				return FileData[source1.visualID] < FileData[source2.visualID]
+				return SortOperator(FileData[source1.visualID], FileData[source2.visualID])
 			else
-				return source1.uiOrder < source2.uiOrder
+				return SortOperator(source1.uiOrder, source2.uiOrder)
 			end
 		end)
 	end,
@@ -150,9 +160,9 @@ local sortFunc = {
 				local itemLevel2 = GetItemLevel(source2.visualID)
 				
 				if itemLevel1 ~= itemLevel2 then
-					return itemLevel1 < itemLevel2
+					return SortOperator(itemLevel1, itemLevel2)
 				else
-					return source1.uiOrder < source2.uiOrder
+					return SortOperator(source1.uiOrder, source2.uiOrder)
 				end
 			end)
 		end
@@ -185,22 +195,22 @@ local sortFunc = {
 						local instance2, encounter2 = drops2[1].instance, drops2[1].encounter
 						
 						if instance1 == instance2 then
-							return encounter1 < encounter2
+							return SortOperator(encounter1, encounter2)
 						else
-							return instance1 < instance2
+							return SortOperator(instance1, instance2)
 						end
 					end
 				else
 					if item1.sourceType == item2.sourceType then
 						if FileData[source1.visualID] and FileData[source2.visualID] then
-							return FileData[source1.visualID] > FileData[source2.visualID]
+							return SortOperator(FileData[source1.visualID], FileData[source2.visualID])
 						end
 					else
-						return item1.sourceType < item2.sourceType
+						return SortOperator(item1.sourceType, item2.sourceType)
 					end
 				end
 			end
-			return source1.uiOrder < source2.uiOrder
+			return SortOperator(source1.uiOrder, source2.uiOrder)
 		end)
 	end,
 	
@@ -229,12 +239,12 @@ local sortFunc = {
 				end
 				
 				if index1 == index2 then
-					return file1 < file2
+					return SortOperator(file1, file2)
 				else
-					return index1 < index2
+					return SortOperator(index1, index2)
 				end
 			else
-				return source1.uiOrder < source2.uiOrder
+				return SortOperator(source1.uiOrder, source2.uiOrder)
 			end
 		end)
 	end,
@@ -243,11 +253,9 @@ local sortFunc = {
 -- sort again when we are sure all items are cached
 -- not the most efficient way to do this
 local function SortItemLevelEvent()
-	if Wardrobe:IsVisible() then
-		if Lib_UIDropDownMenu_GetSelectedValue(WardRobeSortDropDown) == LE_ITEM_LEVEL then
-			sortFunc[db.sortDropdown](Wardrobe)
-			Wardrobe:UpdateItems()
-		end
+	if Wardrobe:IsVisible() and db.sortDropdown == LE_ITEM_LEVEL then
+		sortFunc[db.sortDropdown](Wardrobe)
+		Wardrobe:UpdateItems()
 	end
 end
 
@@ -272,7 +280,7 @@ local function PositionDropDown()
 		local _, isWeapon = C_TransmogCollection.GetCategoryInfo(Wardrobe:GetActiveCategory() or -1)
 		WardRobeSortDropDown:SetPoint("TOPLEFT", Wardrobe.WeaponDropDown, "BOTTOMLEFT", 0, isWeapon and 55 or 32)
 	else
-		WardRobeSortDropDown:SetPoint("TOPLEFT", Wardrobe.WeaponDropDown, "BOTTOMLEFT", 0, 5)
+		WardRobeSortDropDown:SetPoint("TOPLEFT", Wardrobe.WeaponDropDown, "BOTTOMLEFT", 0, LegionWardrobeY)
 	end
 end
 
@@ -288,6 +296,7 @@ local function CreateDropdown()
 			db.sortDropdown = self.value
 			Lib_UIDropDownMenu_SetSelectedValue(dropdown, self.value)
 			Lib_UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[self.value])
+			modifier = IsModifierKeyDown()
 			Wardrobe:SortVisuals()
 		end
 		
