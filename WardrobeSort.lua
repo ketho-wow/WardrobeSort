@@ -184,9 +184,11 @@ local sortFunc = {
 		sort(self:GetFilteredVisualsList(), function(source1, source2)
 			local item1 = WardrobeCollectionFrame_GetSortedAppearanceSources(source1.visualID)[1]
 			local item2 = WardrobeCollectionFrame_GetSortedAppearanceSources(source2.visualID)[1]
+			item1.sourceType = item1.sourceType or 7
+			item2.sourceType = item2.sourceType or 7
 			
-			if item1.sourceType and item2.sourceType then
-				if item1.sourceType == TRANSMOG_SOURCE_BOSS_DROP and item2.sourceType == item1.sourceType then
+			if item2.sourceType == item1.sourceType then
+				if item1.sourceType == TRANSMOG_SOURCE_BOSS_DROP then
 					local drops1 = C_TransmogCollection.GetAppearanceSourceDrops(item1.sourceID)
 					local drops2 = C_TransmogCollection.GetAppearanceSourceDrops(item2.sourceID)
 					
@@ -201,14 +203,12 @@ local sortFunc = {
 						end
 					end
 				else
-					if item1.sourceType == item2.sourceType then
-						if FileData[source1.visualID] and FileData[source2.visualID] then
-							return SortOperator(FileData[source1.visualID], FileData[source2.visualID])
-						end
-					else
-						return SortOperator(item1.sourceType, item2.sourceType)
+					if FileData[source1.visualID] and FileData[source2.visualID] then
+						return SortOperator(FileData[source1.visualID], FileData[source2.visualID])
 					end
 				end
+			else
+				return SortOperator(item1.sourceType, item2.sourceType)
 			end
 			return SortOperator(source1.uiOrder, source2.uiOrder)
 		end)
@@ -262,13 +262,16 @@ end
 local function Model_OnEnter(self)
 	if Wardrobe:GetActiveCategory() then
 		local selectedValue = Lib_UIDropDownMenu_GetSelectedValue(WardRobeSortDropDown)
+
 		if selectedValue == LE_APPEARANCE or selectedValue == LE_COLOR then
 			if FileData[self.visualInfo.visualID] then
 				GameTooltip:AddLine(FileData[self.visualInfo.visualID])
 			end
+		
 		elseif selectedValue == LE_ITEM_LEVEL then
 			local avg_ilvl, min_ilvl, max_ilvl = GetItemLevel(self.visualInfo.visualID)
 			GameTooltip:AddLine(format(min_ilvl == max_ilvl and "%d" or "%d  [%d-%d]", avg_ilvl, min_ilvl, max_ilvl))
+		
 		elseif selectedValue == LE_ITEM_SOURCE then
 			if self.visualInfo.isCollected then
 				local item = WardrobeCollectionFrame_GetSortedAppearanceSources(self.visualInfo.visualID)[1]
@@ -277,8 +280,8 @@ local function Model_OnEnter(self)
 					if #drops > 0 then
 						GameTooltip:AddLine(_G["TRANSMOG_SOURCE_"..item.sourceType]..": "..format(WARDROBE_TOOLTIP_ENCOUNTER_SOURCE, drops[1].encounter, drops[1].instance))
 					end
-				elseif item.sourceType then
-					GameTooltip:AddLine(_G["TRANSMOG_SOURCE_"..item.sourceType])
+				else
+					GameTooltip:AddLine(item.sourceType and _G["TRANSMOG_SOURCE_"..item.sourceType] or UNKNOWN)
 				end
 			end
 		end
