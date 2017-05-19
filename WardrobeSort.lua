@@ -6,7 +6,6 @@ local Wardrobe = WardrobeCollectionFrame.ItemsCollectionFrame
 
 local db, active
 local FileData
-local modifier
 
 local nameVisuals, nameCache = {}, {}
 local catCompleted, itemLevels = {}, {}
@@ -32,8 +31,9 @@ local L = {
 }
 
 local defaults = {
-	db_version = 1,
+	db_version = 2,
 	sortDropdown = LE_DEFAULT,
+	reverse = false,
 }
 
 local colors = {
@@ -101,7 +101,7 @@ local function LoadFileData(addon)
 end
 
 local function SortOperator(a, b)
-	if modifier then
+	if db.reverse then
 		return a > b -- reverse sort
 	else
 		return a < b
@@ -125,9 +125,9 @@ end
 local function CacheHeaders()
 	for k in pairs(nameCache) do
 		-- oh my god so much wasted tables
-		local appearances = WardrobeCollectionFrame_GetSortedAppearanceSources(k)
-		if appearances[1].name then
-			nameVisuals[k] = appearances[1].name
+		local appearances = WardrobeCollectionFrame_GetSortedAppearanceSources(k)[1]
+		if appearances.name then
+			nameVisuals[k] = appearances.name
 			nameCache[k] = nil
 		end
 	end
@@ -187,7 +187,7 @@ local sortFunc = {
 			item1.sourceType = item1.sourceType or 7
 			item2.sourceType = item2.sourceType or 7
 			
-			if item2.sourceType == item1.sourceType then
+			if item1.sourceType == item2.sourceType then
 				if item1.sourceType == TRANSMOG_SOURCE_BOSS_DROP then
 					local drops1 = C_TransmogCollection.GetAppearanceSourceDrops(item1.sourceID)
 					local drops2 = C_TransmogCollection.GetAppearanceSourceDrops(item2.sourceID)
@@ -253,7 +253,7 @@ local sortFunc = {
 -- sort again when we are sure all items are cached
 -- not the most efficient way to do this
 local function SortItemLevelEvent()
-	if Wardrobe:IsVisible() and db.sortDropdown == LE_ITEM_LEVEL then
+	if Wardrobe:IsVisible() and (db.sortDropdown == LE_ITEM_LEVEL or db.sortDropdown == LE_ITEM_SOURCE) then
 		sortFunc[db.sortDropdown](Wardrobe)
 		Wardrobe:UpdateItems()
 	end
@@ -262,7 +262,7 @@ end
 local function Model_OnEnter(self)
 	if Wardrobe:GetActiveCategory() then
 		local selectedValue = Lib_UIDropDownMenu_GetSelectedValue(WardRobeSortDropDown)
-
+		
 		if selectedValue == LE_APPEARANCE or selectedValue == LE_COLOR then
 			if FileData[self.visualInfo.visualID] then
 				GameTooltip:AddLine(FileData[self.visualInfo.visualID])
@@ -311,7 +311,7 @@ local function CreateDropdown()
 			db.sortDropdown = self.value
 			Lib_UIDropDownMenu_SetSelectedValue(dropdown, self.value)
 			Lib_UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[self.value])
-			modifier = IsModifierKeyDown()
+			db.reverse = IsModifierKeyDown()
 			Wardrobe:SortVisuals()
 		end
 		
