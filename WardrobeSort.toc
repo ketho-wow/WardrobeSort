@@ -7,9 +7,7 @@
 ## LoadOnDemand: 1
 ## LoadWith: Blizzard_Collections
 
-#@no-lib-strip@
 Libs\LibStub\LibStub.lua
 Libs\NoTaint_UIDropDownMenu\UIDropDownMenu.xml
-#@end-no-lib-strip@
 
 WardrobeSort.lua
