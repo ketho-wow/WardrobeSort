@@ -6,6 +6,7 @@ local Wardrobe = WardrobeCollectionFrame.ItemsCollectionFrame
 
 local db, active
 local FileData
+local SortOrder
 
 local nameVisuals, nameCache = {}, {}
 local catCompleted, itemLevels = {}, {}
@@ -100,21 +101,21 @@ local function LoadFileData(addon)
 	return _G[addon]:GetFileData()
 end
 
-local function SortOperator(a, b)
-	if db.reverse then
-		return a > b -- reverse sort
-	else
-		return a < b
-	end
+local function SortNormal(a, b)
+	return a < b
+end
+
+local function SortReverse(a, b)
+	return a > b
 end
 
 local function SortAlphabetic()
 	if Wardrobe:IsVisible() then
 		sort(Wardrobe:GetFilteredVisualsList(), function(source1, source2)
 			if nameVisuals[source1.visualID] and nameVisuals[source2.visualID] then
-				return SortOperator(nameVisuals[source1.visualID], nameVisuals[source2.visualID])
+				return SortOrder(nameVisuals[source1.visualID], nameVisuals[source2.visualID])
 			else
-				return SortOperator(source1.uiOrder, source2.uiOrder)
+				return SortOrder(source1.uiOrder, source2.uiOrder)
 			end
 		end)
 		Wardrobe:UpdateItems()
@@ -146,9 +147,9 @@ local sortFunc = {
 		FileData = FileData or LoadFileData("WardrobeSortData")
 		sort(self:GetFilteredVisualsList(), function(source1, source2)
 			if FileData[source1.visualID] and FileData[source2.visualID] then
-				return SortOperator(FileData[source1.visualID], FileData[source2.visualID])
+				return SortOrder(FileData[source1.visualID], FileData[source2.visualID])
 			else
-				return SortOperator(source1.uiOrder, source2.uiOrder)
+				return SortOrder(source1.uiOrder, source2.uiOrder)
 			end
 		end)
 	end,
@@ -160,9 +161,9 @@ local sortFunc = {
 				local itemLevel2 = GetItemLevel(source2.visualID)
 				
 				if itemLevel1 ~= itemLevel2 then
-					return SortOperator(itemLevel1, itemLevel2)
+					return SortOrder(itemLevel1, itemLevel2)
 				else
-					return SortOperator(source1.uiOrder, source2.uiOrder)
+					return SortOrder(source1.uiOrder, source2.uiOrder)
 				end
 			end)
 		end
@@ -197,20 +198,20 @@ local sortFunc = {
 						local instance2, encounter2 = drops2[1].instance, drops2[1].encounter
 						
 						if instance1 == instance2 then
-							return SortOperator(encounter1, encounter2)
+							return SortOrder(encounter1, encounter2)
 						else
-							return SortOperator(instance1, instance2)
+							return SortOrder(instance1, instance2)
 						end
 					end
 				else
 					if FileData[source1.visualID] and FileData[source2.visualID] then
-						return SortOperator(FileData[source1.visualID], FileData[source2.visualID])
+						return SortOrder(FileData[source1.visualID], FileData[source2.visualID])
 					end
 				end
 			else
-				return SortOperator(item1.sourceType, item2.sourceType)
+				return SortOrder(item1.sourceType, item2.sourceType)
 			end
-			return SortOperator(source1.uiOrder, source2.uiOrder)
+			return SortOrder(source1.uiOrder, source2.uiOrder)
 		end)
 	end,
 	
@@ -239,12 +240,12 @@ local sortFunc = {
 				end
 				
 				if index1 == index2 then
-					return SortOperator(file1, file2)
+					return SortOrder(file1, file2)
 				else
-					return SortOperator(index1, index2)
+					return SortOrder(index1, index2)
 				end
 			else
-				return SortOperator(source1.uiOrder, source2.uiOrder)
+				return SortOrder(source1.uiOrder, source2.uiOrder)
 			end
 		end)
 	end,
@@ -312,6 +313,7 @@ local function CreateDropdown()
 			Lib_UIDropDownMenu_SetSelectedValue(dropdown, self.value)
 			Lib_UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[self.value])
 			db.reverse = IsModifierKeyDown()
+			SortOrder = db.reverse and SortReverse or SortNormal
 			Wardrobe:SortVisuals()
 		end
 		
@@ -340,6 +342,8 @@ Wardrobe:HookScript("OnShow", function(self)
 		WardrobeSortDB = CopyTable(defaults)
 	end
 	db = WardrobeSortDB
+	
+	SortOrder = db.reverse and SortReverse or SortNormal
 	
 	f:RegisterEvent("TRANSMOG_COLLECTION_ITEM_UPDATE")
 	f:SetScript("OnEvent", SortItemLevelEvent)
