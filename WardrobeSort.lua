@@ -262,7 +262,7 @@ end
 
 local function Model_OnEnter(self)
 	if Wardrobe:GetActiveCategory() then
-		local selectedValue = Lib_UIDropDownMenu_GetSelectedValue(WardRobeSortDropDown)
+		local selectedValue = L_UIDropDownMenu_GetSelectedValue(WardRobeSortDropDown)
 		
 		if selectedValue == LE_APPEARANCE or selectedValue == LE_COLOR then
 			if FileData[self.visualInfo.visualID] then
@@ -301,17 +301,17 @@ local function PositionDropDown()
 end
 
 local function CreateDropdown()
-	local dropdown = CreateFrame("Frame", "WardRobeSortDropDown", Wardrobe, "Lib_UIDropDownMenuTemplate")
-	Lib_UIDropDownMenu_SetWidth(dropdown, 140)
+	local dropdown = CreateFrame("Frame", "WardRobeSortDropDown", Wardrobe, "L_UIDropDownMenuTemplate")
+	L_UIDropDownMenu_SetWidth(dropdown, 140)
 	
-	Lib_UIDropDownMenu_Initialize(dropdown, function(self)
-		local info = Lib_UIDropDownMenu_CreateInfo()
-		local selectedValue = Lib_UIDropDownMenu_GetSelectedValue(self)
+	L_UIDropDownMenu_Initialize(dropdown, function(self)
+		local info = L_UIDropDownMenu_CreateInfo()
+		local selectedValue = L_UIDropDownMenu_GetSelectedValue(self)
 		
 		info.func = function(self)
 			db.sortDropdown = self.value
-			Lib_UIDropDownMenu_SetSelectedValue(dropdown, self.value)
-			Lib_UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[self.value])
+			L_UIDropDownMenu_SetSelectedValue(dropdown, self.value)
+			L_UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[self.value])
 			db.reverse = IsModifierKeyDown()
 			SortOrder = db.reverse and SortReverse or SortNormal
 			Wardrobe:SortVisuals()
@@ -320,12 +320,12 @@ local function CreateDropdown()
 		for _, id in pairs(dropdownOrder) do
 			info.value, info.text = id, L[id]
 			info.checked = (id == selectedValue)
-			Lib_UIDropDownMenu_AddButton(info)
+			L_UIDropDownMenu_AddButton(info)
 		end
 	end)
 	
-	Lib_UIDropDownMenu_SetSelectedValue(dropdown, db.sortDropdown)
-	Lib_UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[db.sortDropdown])
+	L_UIDropDownMenu_SetSelectedValue(dropdown, db.sortDropdown)
+	L_UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[db.sortDropdown])
 	return dropdown
 end
 
@@ -357,9 +357,9 @@ Wardrobe:HookScript("OnShow", function(self)
 		if self:GetActiveCategory() then
 			sortFunc[db.sortDropdown](self)
 			self:UpdateItems()
-			Lib_UIDropDownMenu_EnableDropDown(dropdown)
+			L_UIDropDownMenu_EnableDropDown(dropdown)
 		else
-			Lib_UIDropDownMenu_DisableDropDown(dropdown)
+			L_UIDropDownMenu_DisableDropDown(dropdown)
 		end
 	end)
 	
