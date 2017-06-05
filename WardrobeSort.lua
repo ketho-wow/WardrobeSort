@@ -110,7 +110,7 @@ local function SortReverse(a, b)
 end
 
 local function SortAlphabetic()
-	if Wardrobe:IsVisible() then
+	if Wardrobe:IsVisible() then -- check if wardrobe is still open after caching is finished
 		sort(Wardrobe:GetFilteredVisualsList(), function(source1, source2)
 			if nameVisuals[source1.visualID] and nameVisuals[source2.visualID] then
 				return SortOrder(nameVisuals[source1.visualID], nameVisuals[source2.visualID])
@@ -155,18 +155,16 @@ local sortFunc = {
 	end,
 	
 	[LE_ITEM_LEVEL] = function(self)
-		if self:IsVisible() then -- check if wardrobe is still open after caching is finished
-			sort(self:GetFilteredVisualsList(), function(source1, source2)
-				local itemLevel1 = GetItemLevel(source1.visualID)
-				local itemLevel2 = GetItemLevel(source2.visualID)
-				
-				if itemLevel1 ~= itemLevel2 then
-					return SortOrder(itemLevel1, itemLevel2)
-				else
-					return SortOrder(source1.uiOrder, source2.uiOrder)
-				end
-			end)
-		end
+		sort(self:GetFilteredVisualsList(), function(source1, source2)
+			local itemLevel1 = GetItemLevel(source1.visualID)
+			local itemLevel2 = GetItemLevel(source2.visualID)
+			
+			if itemLevel1 ~= itemLevel2 then
+				return SortOrder(itemLevel1, itemLevel2)
+			else
+				return SortOrder(source1.uiOrder, source2.uiOrder)
+			end
+		end)
 	end,
 	
 	[LE_ALPHABETIC] = function(self)
@@ -253,6 +251,7 @@ local sortFunc = {
 
 -- sort again when we are sure all items are cached
 -- not the most efficient way to do this
+-- this event does not seem to fire for weapons or only when mouseovering a weapon appearance (?)
 local function SortItemLevelEvent()
 	if Wardrobe:IsVisible() and (db.sortDropdown == LE_ITEM_LEVEL or db.sortDropdown == LE_ITEM_SOURCE) then
 		sortFunc[db.sortDropdown](Wardrobe)
@@ -279,7 +278,8 @@ local function Model_OnEnter(self)
 				if item.sourceType == TRANSMOG_SOURCE_BOSS_DROP then
 					local drops = C_TransmogCollection.GetAppearanceSourceDrops(item.sourceID)
 					if #drops > 0 then
-						GameTooltip:AddLine(_G["TRANSMOG_SOURCE_"..item.sourceType]..": "..format(WARDROBE_TOOLTIP_ENCOUNTER_SOURCE, drops[1].encounter, drops[1].instance))
+						local drop = format(WARDROBE_TOOLTIP_ENCOUNTER_SOURCE, drops[1].encounter, drops[1].instance)
+						GameTooltip:AddLine(_G["TRANSMOG_SOURCE_"..item.sourceType]..": "..drop)
 					end
 				else
 					GameTooltip:AddLine(item.sourceType and _G["TRANSMOG_SOURCE_"..item.sourceType] or UNKNOWN)
