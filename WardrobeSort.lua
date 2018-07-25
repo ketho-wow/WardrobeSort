@@ -254,7 +254,7 @@ local sortFunc = {
 	
 	[LE_VISUALID] = function(self)
 		sort(self:GetFilteredVisualsList(), function(source1, source2)
-			return source1.visualID < source2.visualID
+			return SortOrder(source1.visualID, source2.visualID)
 		end)
 	end,
 }
@@ -284,7 +284,7 @@ local function Model_OnEnter(self)
 	if Wardrobe:GetActiveCategory() then
 		local selectedValue = UIDropDownMenu_GetSelectedValue(WardRobeSortDropDown)
 		
-		if selectedValue == LE_APPEARANCE then		
+		if selectedValue == LE_APPEARANCE then
 			GameTooltip:AddLine(FileData[self.visualInfo.visualID] or self.visualInfo.visualID)
 			
 		elseif selectedValue == LE_COLOR then
