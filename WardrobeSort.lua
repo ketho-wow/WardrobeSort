@@ -19,6 +19,7 @@ local LE_ITEM_LEVEL = 3
 local LE_ALPHABETIC = 4
 local LE_ITEM_SOURCE = 5
 local LE_COLOR = 6
+local LE_VISUALID = 7
 
 local L = {
 	[LE_DEFAULT] = DEFAULT,
@@ -27,9 +28,10 @@ local L = {
 	[LE_ALPHABETIC] = COMPACT_UNIT_FRAME_PROFILE_SORTBY_ALPHABETICAL,
 	[LE_ITEM_SOURCE] = SOURCE:gsub("[:：]", ""),
 	[LE_COLOR] = COLOR,
+	[LE_VISUALID] = ID,
 }
 
-local dropdownOrder = {LE_DEFAULT, LE_APPEARANCE, LE_COLOR, LE_ITEM_SOURCE, LE_ITEM_LEVEL, LE_ALPHABETIC}
+local dropdownOrder = {LE_DEFAULT, LE_APPEARANCE, LE_COLOR, LE_ITEM_SOURCE, LE_ITEM_LEVEL, LE_ALPHABETIC, LE_VISUALID}
 
 local defaults = {
 	db_version = 2,
@@ -42,11 +44,13 @@ local colors = {
 	"crimson", -- 255, 0, 63
 	"maroon", -- 128, 0, 0
 	"pink", -- 255, 192, 203
+	"lavender", -- 230, 230, 250
 	"purple", -- 128, 0, 128
 	"indigo", -- 75, 0, 130
 	
 	"blue", -- 0, 0, 255
 	"teal", -- 0, 128, 128
+	"cyan", -- 0, 255, 255
 	
 	"green", -- 0, 255, 0
 	"yellow", -- 255, 255, 0
@@ -247,23 +251,55 @@ local sortFunc = {
 			end
 		end)
 	end,
+	
+	[LE_VISUALID] = function(self)
+		sort(self:GetFilteredVisualsList(), function(source1, source2)
+			return source1.visualID < source2.visualID
+		end)
+	end,
 }
 
--- sort again when we are sure all items are cached. not the most efficient way to do this
--- this event does not seem to fire for weapons or only when mouseovering a weapon appearance (?)
-local function SortItemLevelEvent()
+local function UpdateMouseFocus()
+	local focus = GetMouseFocus()
+	if focus and focus:GetObjectType() == "DressUpModel" and focus:GetParent() == Wardrobe then
+		focus:GetScript("OnEnter")(focus)
+	end
+end
+
+local function OnItemUpdate()
+	-- sort again when we are sure all items are cached. not the most efficient way to do this
+	-- this event does not seem to fire for weapons or only when mouseovering a weapon appearance (?)
 	if Wardrobe:IsVisible() and (db.sortDropdown == LE_ITEM_LEVEL or db.sortDropdown == LE_ITEM_SOURCE) then
 		sortFunc[db.sortDropdown](Wardrobe)
 		Wardrobe:UpdateItems()
+	end
+	
+	if GameTooltip:IsShown() then
+		-- when mouse scrolling the tooltip waits for uncached item info and gets refreshed
+		C_Timer.After(.01, UpdateMouseFocus)
 	end
 end
 
 local function Model_OnEnter(self)
 	if Wardrobe:GetActiveCategory() then
-		local selectedValue = L_UIDropDownMenu_GetSelectedValue(WardRobeSortDropDown)
+		local selectedValue = UIDropDownMenu_GetSelectedValue(WardRobeSortDropDown)
 		
-		if selectedValue == LE_APPEARANCE or selectedValue == LE_COLOR then
+		if selectedValue == LE_APPEARANCE then		
 			GameTooltip:AddLine(FileData[self.visualInfo.visualID] or self.visualInfo.visualID)
+			
+		elseif selectedValue == LE_COLOR then
+			local name = FileData[self.visualInfo.visualID]
+			if name then
+				for _, v in pairs(colors) do
+					if strfind(name, v) then -- highlight the color name
+						name = name:gsub(v, "|cffFFFFFF"..v.."|r")
+						break
+					end
+				end
+				GameTooltip:AddLine(name)
+			else
+				GameTooltip:AddLine(self.visualInfo.visualID)
+			end
 		
 		elseif selectedValue == LE_ITEM_LEVEL then
 			local avg_ilvl, min_ilvl, max_ilvl = GetItemLevel(self.visualInfo.visualID)
@@ -282,6 +318,8 @@ local function Model_OnEnter(self)
 					GameTooltip:AddLine(item.sourceType and _G["TRANSMOG_SOURCE_"..item.sourceType] or UNKNOWN)
 				end
 			end
+		elseif selectedValue == LE_VISUALID then
+			GameTooltip:AddLine(self.visualInfo.visualID)
 		end
 		GameTooltip:Show()
 	end
@@ -298,17 +336,17 @@ local function PositionDropDown()
 end
 
 local function CreateDropdown()
-	local dropdown = CreateFrame("Frame", "WardRobeSortDropDown", Wardrobe, "L_UIDropDownMenuTemplate")
-	L_UIDropDownMenu_SetWidth(dropdown, 140)
+	local dropdown = CreateFrame("Frame", "WardRobeSortDropDown", Wardrobe, "UIDropDownMenuTemplate")
+	UIDropDownMenu_SetWidth(dropdown, 140)
 	
-	L_UIDropDownMenu_Initialize(dropdown, function(self)
-		local info = L_UIDropDownMenu_CreateInfo()
-		local selectedValue = L_UIDropDownMenu_GetSelectedValue(self)
+	UIDropDownMenu_Initialize(dropdown, function(self)
+		local info = UIDropDownMenu_CreateInfo()
+		local selectedValue = UIDropDownMenu_GetSelectedValue(self)
 		
 		info.func = function(self)
 			db.sortDropdown = self.value
-			L_UIDropDownMenu_SetSelectedValue(dropdown, self.value)
-			L_UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[self.value])
+			UIDropDownMenu_SetSelectedValue(dropdown, self.value)
+			UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[self.value])
 			db.reverse = IsModifierKeyDown()
 			SortOrder = db.reverse and SortReverse or SortNormal
 			Wardrobe:SortVisuals()
@@ -317,12 +355,12 @@ local function CreateDropdown()
 		for _, id in pairs(dropdownOrder) do
 			info.value, info.text = id, L[id]
 			info.checked = (id == selectedValue)
-			L_UIDropDownMenu_AddButton(info)
+			UIDropDownMenu_AddButton(info)
 		end
 	end)
 	
-	L_UIDropDownMenu_SetSelectedValue(dropdown, db.sortDropdown)
-	L_UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[db.sortDropdown])
+	UIDropDownMenu_SetSelectedValue(dropdown, db.sortDropdown)
+	UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[db.sortDropdown])
 	return dropdown
 end
 
@@ -343,7 +381,7 @@ Wardrobe:HookScript("OnShow", function(self)
 	SortOrder = db.reverse and SortReverse or SortNormal
 	
 	f:RegisterEvent("TRANSMOG_COLLECTION_ITEM_UPDATE")
-	f:SetScript("OnEvent", SortItemLevelEvent)
+	f:SetScript("OnEvent", OnItemUpdate)
 	
 	local dropdown = CreateDropdown()
 	PositionDropDown()
@@ -354,9 +392,9 @@ Wardrobe:HookScript("OnShow", function(self)
 		if self:GetActiveCategory() then
 			sortFunc[db.sortDropdown](self)
 			self:UpdateItems()
-			L_UIDropDownMenu_EnableDropDown(dropdown)
+			UIDropDownMenu_EnableDropDown(dropdown)
 		else
-			L_UIDropDownMenu_DisableDropDown(dropdown)
+			UIDropDownMenu_DisableDropDown(dropdown)
 		end
 	end)
 	
@@ -366,12 +404,7 @@ Wardrobe:HookScript("OnShow", function(self)
 	end
 	
 	-- update tooltip when scrolling
-	Wardrobe:HookScript("OnMouseWheel", function()
-		local focus = GetMouseFocus()
-		if focus and focus:GetObjectType() == "DressUpModel" then
-			focus:GetScript("OnEnter")(focus)
-		end
-	end)
+	Wardrobe:HookScript("OnMouseWheel", UpdateMouseFocus)
 	
 	-- reposition when the weapons dropdown is shown at the transmogrifier
 	hooksecurefunc(Wardrobe, "UpdateWeaponDropDown", PositionDropDown)

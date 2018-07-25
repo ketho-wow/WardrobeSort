@@ -1,4 +1,4 @@
-## Interface: 70300
+## Interface: 80000
 ## Version: @project-version@
 ## Title: WardrobeSort
 ## Notes: Sorts the Wardrobe
@@ -7,9 +7,5 @@
 ## LoadOnDemand: 1
 ## LoadWith: Blizzard_Collections
 
-#@no-lib-strip@
-Libs\LibStub\LibStub.lua
-Libs\LibUIDropDownMenu\LibUIDropDownMenu.xml
-#@end-no-lib-strip@
-
+UIDropDownMenu.lua
 WardrobeSort.lua
