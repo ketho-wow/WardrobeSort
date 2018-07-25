@@ -283,6 +283,7 @@ end
 local function Model_OnEnter(self)
 	if Wardrobe:GetActiveCategory() then
 		local selectedValue = UIDropDownMenu_GetSelectedValue(WardRobeSortDropDown)
+		FileData = FileData or LoadFileData("WardrobeSortData")
 		
 		if selectedValue == LE_APPEARANCE then
 			GameTooltip:AddLine(FileData[self.visualInfo.visualID] or self.visualInfo.visualID)
@@ -319,7 +320,8 @@ local function Model_OnEnter(self)
 				end
 			end
 		elseif selectedValue == LE_VISUALID then
-			GameTooltip:AddLine(self.visualInfo.visualID)
+			GameTooltip:AddLine(FileData[self.visualInfo.visualID])
+			GameTooltip:AddLine("|cffFFFFFF"..self.visualInfo.visualID.."|r")
 		end
 		GameTooltip:Show()
 	end
