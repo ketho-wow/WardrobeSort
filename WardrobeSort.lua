@@ -1,6 +1,3 @@
--- Author: Ketho (EU-Boulderfist)
--- License: Public Domain
-
 local f = CreateFrame("Frame")
 local Wardrobe = WardrobeCollectionFrame.ItemsCollectionFrame
 

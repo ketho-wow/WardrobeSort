@@ -1,4 +1,4 @@
-## Interface: 80205
+## Interface: 80300
 ## Version: @project-version@
 ## Title: WardrobeSort
 ## Notes: Sorts the Wardrobe
@@ -6,6 +6,8 @@
 ## SavedVariables: WardrobeSortDB
 ## LoadOnDemand: 1
 ## LoadWith: Blizzard_Collections
+## X-Curse-Project-ID: 101102
+## X-WoWI-ID: 24003
 
 UIDropDownMenu.lua
 WardrobeSort.lua
