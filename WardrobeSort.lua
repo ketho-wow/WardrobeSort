@@ -44,17 +44,17 @@ local colors = {
 	"lavender", -- 230, 230, 250
 	"purple", -- 128, 0, 128
 	"indigo", -- 75, 0, 130
-	
+
 	"blue", -- 0, 0, 255
 	"teal", -- 0, 128, 128
 	"cyan", -- 0, 255, 255
-	
+
 	"green", -- 0, 255, 0
 	"yellow", -- 255, 255, 0
 	"gold", -- 255, 215, 0
 	"orange", -- 255, 128, 0
 	"brown", -- 128, 64, 0
-	
+
 	"black", -- 0, 0, 0
 	"gray", -- 128, 128, 128
 	"grey",
@@ -66,7 +66,7 @@ local ItemCache = setmetatable({}, {__index = function(t, k)
 	wipe(itemLevels)
 	local sum = 0
 	local v
-	
+
 	-- can return source ids for non-existing items
 	for _, source in pairs(C_TransmogCollection.GetAllAppearanceSources(k)) do
 		local link = select(6, C_TransmogCollection.GetAppearanceSourceInfo(source))
@@ -77,7 +77,7 @@ local ItemCache = setmetatable({}, {__index = function(t, k)
 		end
 	end
 	sort(itemLevels)
-	
+
 	-- check if (all?) item info is available
 	if #itemLevels > 0 then
 		v = {sum/#itemLevels, itemLevels[1], itemLevels[#itemLevels]}
@@ -134,7 +134,7 @@ local function CacheHeaders()
 			nameCache[k] = nil
 		end
 	end
-	
+
 	if not next(nameCache) then
 		catCompleted[Wardrobe:GetActiveCategory()] = true
 		f:SetScript("OnUpdate", nil)
@@ -144,7 +144,7 @@ end
 
 local sortFunc = {
 	[LE_DEFAULT] = function() end,
-	
+
 	[LE_APPEARANCE] = function(self)
 		FileData = FileData or LoadFileData("WardrobeSortData")
 		sort(self:GetFilteredVisualsList(), function(source1, source2)
@@ -155,12 +155,12 @@ local sortFunc = {
 			end
 		end)
 	end,
-	
+
 	[LE_ITEM_LEVEL] = function(self)
 		sort(self:GetFilteredVisualsList(), function(source1, source2)
 			local itemLevel1 = GetItemLevel(source1.visualID)
 			local itemLevel2 = GetItemLevel(source2.visualID)
-			
+
 			if itemLevel1 ~= itemLevel2 then
 				return SortOrder(itemLevel1, itemLevel2)
 			else
@@ -168,18 +168,18 @@ local sortFunc = {
 			end
 		end)
 	end,
-	
+
 	[LE_ALPHABETIC] = function(self)
 		if catCompleted[self:GetActiveCategory()] then
 			SortAlphabetic()
 		else
 			for _, v in pairs(self:GetFilteredVisualsList()) do
-				nameCache[v.visualID] = true -- queue data to be cached	
+				nameCache[v.visualID] = true -- queue data to be cached
 			end
 			f:SetScript("OnUpdate", CacheHeaders)
 		end
 	end,
-	
+
 	[LE_ITEM_SOURCE] = function(self)
 		FileData = FileData or LoadFileData("WardrobeSortData")
 		sort(self:GetFilteredVisualsList(), function(source1, source2)
@@ -187,16 +187,16 @@ local sortFunc = {
 			local item2 = WardrobeCollectionFrame_GetSortedAppearanceSources(source2.visualID)[1]
 			item1.sourceType = item1.sourceType or 7
 			item2.sourceType = item2.sourceType or 7
-			
+
 			if item1.sourceType == item2.sourceType then
 				if item1.sourceType == TRANSMOG_SOURCE_BOSS_DROP then
 					local drops1 = C_TransmogCollection.GetAppearanceSourceDrops(item1.sourceID)
 					local drops2 = C_TransmogCollection.GetAppearanceSourceDrops(item2.sourceID)
-					
+
 					if #drops1 > 0 and #drops2 > 0 then
 						local instance1, encounter1 = drops1[1].instance, drops1[1].encounter
 						local instance2, encounter2 = drops2[1].instance, drops2[1].encounter
-						
+
 						if instance1 == instance2 then
 							return SortOrder(encounter1, encounter2)
 						else
@@ -214,14 +214,14 @@ local sortFunc = {
 			return SortOrder(source1.uiOrder, source2.uiOrder)
 		end)
 	end,
-	
+
 	-- sort by the color in filename
 	[LE_COLOR] = function(self)
 		FileData = FileData or LoadFileData("WardrobeSortData")
 		sort(self:GetFilteredVisualsList(), function(source1, source2)
 			local file1 = FileData[source1.visualID]
 			local file2 = FileData[source2.visualID]
-			
+
 			if file1 and file2 then
 				local index1 = #colors+1
 				for k, v in pairs(colors) do
@@ -230,7 +230,7 @@ local sortFunc = {
 						break
 					end
 				end
-				
+
 				local index2 = #colors+1
 				for k, v in pairs(colors) do
 					if strfind(file2, v) then
@@ -238,7 +238,7 @@ local sortFunc = {
 						break
 					end
 				end
-				
+
 				if index1 == index2 then
 					return SortOrder(file1, file2)
 				else
@@ -249,7 +249,7 @@ local sortFunc = {
 			end
 		end)
 	end,
-	
+
 	[LE_VISUALID] = function(self)
 		sort(self:GetFilteredVisualsList(), function(source1, source2)
 			return SortOrder(source1.visualID, source2.visualID)
@@ -271,7 +271,7 @@ local function OnItemUpdate()
 		sortFunc[db.sortDropdown](Wardrobe)
 		Wardrobe:UpdateItems()
 	end
-	
+
 	if GameTooltip:IsShown() then
 		-- when mouse scrolling the tooltip waits for uncached item info and gets refreshed
 		C_Timer.After(.01, UpdateMouseFocus)
@@ -282,10 +282,10 @@ local function Model_OnEnter(self)
 	if Wardrobe:GetActiveCategory() then
 		local selectedValue = UIDropDownMenu_GetSelectedValue(WardRobeSortDropDown)
 		FileData = FileData or LoadFileData("WardrobeSortData")
-		
+
 		if selectedValue == LE_APPEARANCE then
 			GameTooltip:AddLine(FileData[self.visualInfo.visualID] or self.visualInfo.visualID)
-			
+
 		elseif selectedValue == LE_COLOR then
 			local name = FileData[self.visualInfo.visualID]
 			if name then
@@ -299,11 +299,11 @@ local function Model_OnEnter(self)
 			else
 				GameTooltip:AddLine(self.visualInfo.visualID)
 			end
-		
+
 		elseif selectedValue == LE_ITEM_LEVEL then
 			local avg_ilvl, min_ilvl, max_ilvl = GetItemLevel(self.visualInfo.visualID)
 			GameTooltip:AddLine(format(min_ilvl == max_ilvl and "%d" or "%d  [%d-%d]", avg_ilvl, min_ilvl, max_ilvl))
-		
+
 		elseif selectedValue == LE_ITEM_SOURCE then
 			if self.visualInfo.isCollected then
 				local item = WardrobeCollectionFrame_GetSortedAppearanceSources(self.visualInfo.visualID)[1]
@@ -338,11 +338,11 @@ end
 local function CreateDropdown()
 	local dropdown = CreateFrame("Frame", "WardRobeSortDropDown", Wardrobe, "UIDropDownMenuTemplate")
 	UIDropDownMenu_SetWidth(dropdown, 140)
-	
+
 	UIDropDownMenu_Initialize(dropdown, function(self)
 		local info = UIDropDownMenu_CreateInfo()
 		local selectedValue = UIDropDownMenu_GetSelectedValue(self)
-		
+
 		info.func = function(self)
 			db.sortDropdown = self.value
 			UIDropDownMenu_SetSelectedValue(dropdown, self.value)
@@ -351,14 +351,14 @@ local function CreateDropdown()
 			SortOrder = db.reverse and SortReverse or SortNormal
 			Wardrobe:SortVisuals()
 		end
-		
+
 		for _, id in pairs(dropdownOrder) do
 			info.value, info.text = id, L[id]
 			info.checked = (id == selectedValue)
 			UIDropDownMenu_AddButton(info)
 		end
 	end)
-	
+
 	UIDropDownMenu_SetSelectedValue(dropdown, db.sortDropdown)
 	UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[db.sortDropdown])
 	return dropdown
@@ -372,20 +372,20 @@ Wardrobe:HookScript("OnShow", function(self)
 	else
 		active = true
 	end
-	
+
 	if not WardrobeSortDB or WardrobeSortDB.db_version < defaults.db_version then
 		WardrobeSortDB = CopyTable(defaults)
 	end
 	db = WardrobeSortDB
-	
+
 	SortOrder = db.reverse and SortReverse or SortNormal
-	
+
 	f:RegisterEvent("TRANSMOG_COLLECTION_ITEM_UPDATE")
 	f:SetScript("OnEvent", OnItemUpdate)
-	
+
 	local dropdown = CreateDropdown()
 	PositionDropDown()
-	
+
 	-- sort and update
 	hooksecurefunc(Wardrobe, "SortVisuals", function()
 		-- exclude enchants/illusions by checking for category
@@ -397,15 +397,15 @@ Wardrobe:HookScript("OnShow", function(self)
 			UIDropDownMenu_DisableDropDown(dropdown)
 		end
 	end)
-	
+
 	-- show appearance information in tooltip
 	for _, model in pairs(self.Models) do
 		model:HookScript("OnEnter", Model_OnEnter)
 	end
-	
+
 	-- update tooltip when scrolling
 	Wardrobe:HookScript("OnMouseWheel", UpdateMouseFocus)
-	
+
 	-- reposition when the weapons dropdown is shown at the transmogrifier
 	hooksecurefunc(Wardrobe, "UpdateWeaponDropDown", PositionDropDown)
 end)
