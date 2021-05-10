@@ -1,0 +1,34 @@
+{
+	"Lua.diagnostics.globals": [
+		"APPEARANCE_LABEL",
+		"COLOR",
+		"COMPACT_UNIT_FRAME_PROFILE_SORTBY_ALPHABETICAL",
+		"COMPACT_UNIT_FRAME_PROFILE_SORTBY",
+		"DEFAULT",
+		"GameTooltip",
+		"ID",
+		"SOURCE",
+		"STAT_AVERAGE_ITEM_LEVEL",
+		"TRANSMOG_SOURCE_BOSS_DROP",
+		"UIDropDownMenu_AddButton",
+		"UIDropDownMenu_CreateInfo",
+		"UIDropDownMenu_DisableDropDown",
+		"UIDropDownMenu_EnableDropDown",
+		"UIDropDownMenu_GetSelectedValue",
+		"UIDropDownMenu_Initialize",
+		"UIDROPDOWNMENU_MAXBUTTONS",
+		"UIDROPDOWNMENU_MAXLEVELS",
+		"UIDropDownMenu_SetSelectedValue",
+		"UIDropDownMenu_SetText",
+		"UIDropDownMenu_SetWidth",
+		"UNKNOWN",
+		"WARDROBE_TOOLTIP_ENCOUNTER_SOURCE",
+		"WardrobeCollectionFrame_GetSortedAppearanceSources",
+		"WardrobeCollectionFrame",
+		"WardrobeFrame_IsAtTransmogrifier",
+		"WardRobeSortDropDown"
+	],
+	"Lua.diagnostics.disable": [
+		"unbalanced-assignments"
+	]
+}

@@ -64,7 +64,8 @@ local colors = {
 
 local ItemCache = setmetatable({}, {__index = function(t, k)
 	wipe(itemLevels)
-	local sum, v = 0
+	local sum = 0
+	local v
 	
 	-- can return source ids for non-existing items
 	for _, source in pairs(C_TransmogCollection.GetAllAppearanceSources(k)) do

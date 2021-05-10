@@ -1,4 +1,4 @@
-## Interface: 80300
+## Interface: 90005
 ## Version: @project-version@
 ## Title: WardrobeSort
 ## Notes: Sorts the Wardrobe
