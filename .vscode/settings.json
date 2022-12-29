@@ -23,9 +23,7 @@
 		"UIDropDownMenu_SetWidth",
 		"UNKNOWN",
 		"WARDROBE_TOOLTIP_ENCOUNTER_SOURCE",
-		"WardrobeCollectionFrame_GetSortedAppearanceSources",
 		"WardrobeCollectionFrame",
-		"WardrobeFrame_IsAtTransmogrifier",
 		"WardRobeSortDropDown"
 	],
 	"Lua.diagnostics.disable": [

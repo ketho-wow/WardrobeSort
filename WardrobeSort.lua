@@ -128,7 +128,7 @@ end
 local function CacheHeaders()
 	for k in pairs(nameCache) do
 		-- oh my god so much wasted tables
-		local appearances = WardrobeCollectionFrame_GetSortedAppearanceSources(k)[1]
+		local appearances = CollectionWardrobeUtil.GetSortedAppearanceSources(k)[1]
 		if appearances.name then
 			nameVisuals[k] = appearances.name
 			nameCache[k] = nil
@@ -183,8 +183,8 @@ local sortFunc = {
 	[LE_ITEM_SOURCE] = function(self)
 		FileData = FileData or LoadFileData("WardrobeSortData")
 		sort(self:GetFilteredVisualsList(), function(source1, source2)
-			local item1 = WardrobeCollectionFrame_GetSortedAppearanceSources(source1.visualID)[1]
-			local item2 = WardrobeCollectionFrame_GetSortedAppearanceSources(source2.visualID)[1]
+			local item1 = CollectionWardrobeUtil.GetSortedAppearanceSources(source1.visualID)[1]
+			local item2 = CollectionWardrobeUtil.GetSortedAppearanceSources(source2.visualID)[1]
 			item1.sourceType = item1.sourceType or 7
 			item2.sourceType = item2.sourceType or 7
 
@@ -260,7 +260,8 @@ local sortFunc = {
 local function UpdateMouseFocus()
 	local focus = GetMouseFocus()
 	if focus and focus:GetObjectType() == "DressUpModel" and focus:GetParent() == Wardrobe then
-		focus:GetScript("OnEnter")(focus)
+		-- in 10.0 need to delay until next frame
+		RunNextFrame(function() focus:GetScript("OnEnter")(focus) end)
 	end
 end
 
@@ -306,7 +307,7 @@ local function Model_OnEnter(self)
 
 		elseif selectedValue == LE_ITEM_SOURCE then
 			if self.visualInfo.isCollected then
-				local item = WardrobeCollectionFrame_GetSortedAppearanceSources(self.visualInfo.visualID)[1]
+				local item = CollectionWardrobeUtil.GetSortedAppearanceSources(self.visualInfo.visualID)[1]
 				if item.sourceType == TRANSMOG_SOURCE_BOSS_DROP then
 					local drops = C_TransmogCollection.GetAppearanceSourceDrops(item.sourceID)
 					if #drops > 0 then
@@ -327,7 +328,7 @@ end
 
 -- place differently for the transmogrifier / collections tab
 local function PositionDropDown()
-	if WardrobeFrame_IsAtTransmogrifier() then
+	if C_Transmog.IsAtTransmogNPC() then
 		local _, isWeapon = C_TransmogCollection.GetCategoryInfo(Wardrobe:GetActiveCategory() or -1)
 		WardRobeSortDropDown:SetPoint("TOPLEFT", Wardrobe.WeaponDropDown, "BOTTOMLEFT", 0, isWeapon and 55 or 32)
 	else

@@ -1,6 +1,6 @@
-## Interface: 90200
+## Interface: 100002
 ## Title: WardrobeSortData
-## Version: 9.2.5 (42850)
+## Version: 10.0.5 (47215)
 ## Author: Ketho
 ## Notes: Load on Demand Wardrobe FileData
 ## LoadOnDemand: 1
