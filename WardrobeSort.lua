@@ -282,48 +282,47 @@ local function Model_OnEnter(self)
 	if Wardrobe:GetActiveCategory() then
 		local selectedValue = db.sortDropdown
 		FileData = FileData or LoadFileData("WardrobeSortData")
-
-		if selectedValue == LE_APPEARANCE then
-			if self.visualInfo then -- when mousescrolling and there is no model on the next page under the cursor
+		if self.visualInfo then -- when mousescrolling and there is no model on the next page under the cursor
+			if selectedValue == LE_APPEARANCE then
 				GameTooltip:AddLine(FileData[self.visualInfo.visualID] or self.visualInfo.visualID)
-			end
 
-		elseif selectedValue == LE_COLOR then
-			local name = FileData[self.visualInfo.visualID]
-			if name then
-				for _, v in pairs(colors) do
-					if strfind(name, v) then -- highlight the color name
-						name = name:gsub(v, "|cffFFFFFF"..v.."|r")
-						break
+			elseif selectedValue == LE_COLOR then
+				local name = FileData[self.visualInfo.visualID]
+				if name then
+					for _, v in pairs(colors) do
+						if strfind(name, v) then -- highlight the color name
+							name = name:gsub(v, "|cffFFFFFF"..v.."|r")
+							break
+						end
 					end
-				end
-				GameTooltip:AddLine(name)
-			else
-				GameTooltip:AddLine(self.visualInfo.visualID)
-			end
-
-		elseif selectedValue == LE_ITEM_LEVEL then
-			local avg_ilvl, min_ilvl, max_ilvl = GetItemLevel(self.visualInfo.visualID)
-			GameTooltip:AddLine(format(min_ilvl == max_ilvl and "%d" or "%d  [%d-%d]", avg_ilvl, min_ilvl, max_ilvl))
-
-		elseif selectedValue == LE_ITEM_SOURCE then
-			if self.visualInfo.isCollected then
-				local item = CollectionWardrobeUtil.GetSortedAppearanceSources(self.visualInfo.visualID)[1]
-				if item.sourceType == TRANSMOG_SOURCE_BOSS_DROP then
-					local drops = C_TransmogCollection.GetAppearanceSourceDrops(item.sourceID)
-					if #drops > 0 then
-						local drop = format(WARDROBE_TOOLTIP_ENCOUNTER_SOURCE, drops[1].encounter, drops[1].instance)
-						GameTooltip:AddLine(_G["TRANSMOG_SOURCE_"..item.sourceType]..": "..drop)
-					end
+					GameTooltip:AddLine(name)
 				else
-					GameTooltip:AddLine(item.sourceType and _G["TRANSMOG_SOURCE_"..item.sourceType] or UNKNOWN)
+					GameTooltip:AddLine(self.visualInfo.visualID)
 				end
+
+			elseif selectedValue == LE_ITEM_LEVEL then
+				local avg_ilvl, min_ilvl, max_ilvl = GetItemLevel(self.visualInfo.visualID)
+				GameTooltip:AddLine(format(min_ilvl == max_ilvl and "%d" or "%d  [%d-%d]", avg_ilvl, min_ilvl, max_ilvl))
+
+			elseif selectedValue == LE_ITEM_SOURCE then
+				if self.visualInfo.isCollected then
+					local item = CollectionWardrobeUtil.GetSortedAppearanceSources(self.visualInfo.visualID)[1]
+					if item.sourceType == TRANSMOG_SOURCE_BOSS_DROP then
+						local drops = C_TransmogCollection.GetAppearanceSourceDrops(item.sourceID)
+						if #drops > 0 then
+							local drop = format(WARDROBE_TOOLTIP_ENCOUNTER_SOURCE, drops[1].encounter, drops[1].instance)
+							GameTooltip:AddLine(_G["TRANSMOG_SOURCE_"..item.sourceType]..": "..drop)
+						end
+					else
+						GameTooltip:AddLine(item.sourceType and _G["TRANSMOG_SOURCE_"..item.sourceType] or UNKNOWN)
+					end
+				end
+			elseif selectedValue == LE_VISUALID then
+				GameTooltip:AddLine(FileData[self.visualInfo.visualID])
+				GameTooltip:AddLine("|cffFFFFFF"..self.visualInfo.visualID.."|r")
 			end
-		elseif selectedValue == LE_VISUALID then
-			GameTooltip:AddLine(FileData[self.visualInfo.visualID])
-			GameTooltip:AddLine("|cffFFFFFF"..self.visualInfo.visualID.."|r")
+			GameTooltip:Show()
 		end
-		GameTooltip:Show()
 	end
 end
 
