@@ -8,7 +8,6 @@ local SortOrder
 local nameVisuals, nameCache = {}, {}
 local catCompleted, itemLevels = {}, {}
 local unknown = {-1}
-local LegionWardrobeY = IsAddOnLoaded("LegionWardrobe") and 55 or 5
 
 local LE_DEFAULT = 1
 local LE_APPEARANCE = 2
@@ -70,7 +69,7 @@ local ItemCache = setmetatable({}, {__index = function(t, k)
 	-- can return source ids for non-existing items
 	for _, source in pairs(C_TransmogCollection.GetAllAppearanceSources(k)) do
 		local link = select(6, C_TransmogCollection.GetAppearanceSourceInfo(source))
-		local ilvl = select(4, GetItemInfo(link))
+		local ilvl = select(4, C_Item.GetItemInfo(link))
 		if ilvl then
 			tinsert(itemLevels, ilvl)
 			sum = sum + ilvl
@@ -91,11 +90,11 @@ local function GetItemLevel(visualID)
 end
 
 local function LoadFileData(addon)
-	local loaded, reason = LoadAddOn(addon)
+	local loaded, reason = C_AddOns.LoadAddOn(addon)
 	if not loaded then
 		if reason == "DISABLED" then
-			EnableAddOn(addon, true)
-			LoadAddOn(addon)
+			C_AddOns.EnableAddOn(addon)
+			C_AddOns.LoadAddOn(addon)
 		else
 			error(addon..": "..reason)
 		end
@@ -258,7 +257,7 @@ local sortFunc = {
 }
 
 local function UpdateMouseFocus()
-	local focus = GetMouseFocus()
+	local focus = GetMouseFoci()[1]
 	if focus and focus:GetObjectType() == "DressUpModel" and focus:GetParent() == Wardrobe then
 		-- in 10.0 need to delay until next frame
 		RunNextFrame(function() focus:GetScript("OnEnter")(focus) end)
@@ -281,11 +280,13 @@ end
 
 local function Model_OnEnter(self)
 	if Wardrobe:GetActiveCategory() then
-		local selectedValue = UIDropDownMenu_GetSelectedValue(WardRobeSortDropDown)
+		local selectedValue = db.sortDropdown
 		FileData = FileData or LoadFileData("WardrobeSortData")
 
 		if selectedValue == LE_APPEARANCE then
-			GameTooltip:AddLine(FileData[self.visualInfo.visualID] or self.visualInfo.visualID)
+			if self.visualInfo then -- when mousescrolling and there is no model on the next page under the cursor
+				GameTooltip:AddLine(FileData[self.visualInfo.visualID] or self.visualInfo.visualID)
+			end
 
 		elseif selectedValue == LE_COLOR then
 			local name = FileData[self.visualInfo.visualID]
@@ -329,39 +330,32 @@ end
 -- place differently for the transmogrifier / collections tab
 local function PositionDropDown()
 	if C_Transmog.IsAtTransmogNPC() then
-		local _, isWeapon = C_TransmogCollection.GetCategoryInfo(Wardrobe:GetActiveCategory() or -1)
-		WardRobeSortDropDown:SetPoint("TOPLEFT", Wardrobe.WeaponDropDown, "BOTTOMLEFT", 0, isWeapon and 55 or 32)
+		WardRobeSortDropdown:SetPoint("TOPLEFT", WardrobeCollectionFrame.ClassDropdown, "BOTTOMLEFT", 30, 20)
 	else
-		WardRobeSortDropDown:SetPoint("TOPLEFT", Wardrobe.WeaponDropDown, "BOTTOMLEFT", 0, LegionWardrobeY)
+		WardRobeSortDropdown:SetPoint("TOPLEFT", WardrobeCollectionFrame.ClassDropdown, "BOTTOMLEFT")
 	end
 end
 
 local function CreateDropdown()
-	local dropdown = CreateFrame("Frame", "WardRobeSortDropDown", Wardrobe, "UIDropDownMenuTemplate")
-	UIDropDownMenu_SetWidth(dropdown, 140)
-
-	UIDropDownMenu_Initialize(dropdown, function(self)
-		local info = UIDropDownMenu_CreateInfo()
-		local selectedValue = UIDropDownMenu_GetSelectedValue(self)
-
-		info.func = function(self)
-			db.sortDropdown = self.value
-			UIDropDownMenu_SetSelectedValue(dropdown, self.value)
-			UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[self.value])
-			db.reverse = IsModifierKeyDown()
-			SortOrder = db.reverse and SortReverse or SortNormal
-			Wardrobe:SortVisuals()
-		end
-
-		for _, id in pairs(dropdownOrder) do
-			info.value, info.text = id, L[id]
-			info.checked = (id == selectedValue)
-			UIDropDownMenu_AddButton(info)
-		end
-	end)
-
-	UIDropDownMenu_SetSelectedValue(dropdown, db.sortDropdown)
-	UIDropDownMenu_SetText(dropdown, COMPACT_UNIT_FRAME_PROFILE_SORTBY.." "..L[db.sortDropdown])
+	local dropdown = CreateFrame("DropdownButton", "WardRobeSortDropdown", Wardrobe, "WowStyle2DropdownTemplate")
+	local function IsSelected(value)
+		return value == db.sortDropdown
+	end
+	local function SetSelected(value)
+		db.sortDropdown = value
+		db.reverse = IsModifierKeyDown()
+		SortOrder = db.reverse and SortReverse or SortNormal
+		Wardrobe:SortVisuals()
+	end
+	local t = {}
+	for _, sortType in pairs(dropdownOrder) do
+		table.insert(t, {L[sortType], sortType})
+	end
+	MenuUtil.CreateRadioMenu(dropdown,
+		IsSelected,
+		SetSelected,
+		unpack(t)
+	)
 	return dropdown
 end
 
@@ -408,5 +402,5 @@ Wardrobe:HookScript("OnShow", function(self)
 	Wardrobe:HookScript("OnMouseWheel", UpdateMouseFocus)
 
 	-- reposition when the weapons dropdown is shown at the transmogrifier
-	hooksecurefunc(Wardrobe, "UpdateWeaponDropDown", PositionDropDown)
+	hooksecurefunc(Wardrobe, "UpdateWeaponDropdown", PositionDropDown)
 end)
