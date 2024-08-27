@@ -1,8 +1,8 @@
-## Interface: 100002
+## Interface: 110002
 ## Title: WardrobeSortData
-## Version: 10.0.5 (47215)
-## Author: Ketho
-## Notes: Load on Demand Wardrobe FileData
+## Version: 11.0.2 (56313)
+## Author: Ketho @ EU-Boulderfist
+## Notes: Load on Demand Wardrobe Data
 ## LoadOnDemand: 1
 
 FileData.lua
