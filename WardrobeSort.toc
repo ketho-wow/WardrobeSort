@@ -6,6 +6,7 @@
 ## SavedVariables: WardrobeSortDB
 ## LoadOnDemand: 1
 ## LoadWith: Blizzard_Collections
+## IconTexture: 132645
 ## X-Curse-Project-ID: 101102
 ## X-WoWI-ID: 24003
 ## X-Wago-ID: PANzagG4

@@ -4,5 +4,6 @@
 ## Author: Ketho @ EU-Boulderfist
 ## Notes: Load on Demand Wardrobe Data
 ## LoadOnDemand: 1
+## IconTexture: 132645
 
 FileData.lua
