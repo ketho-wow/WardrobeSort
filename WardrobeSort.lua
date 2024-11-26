@@ -329,7 +329,11 @@ end
 -- place differently for the transmogrifier / collections tab
 local function PositionDropDown()
 	if C_Transmog.IsAtTransmogNPC() then
-		WardRobeSortDropdown:SetPoint("TOPLEFT", WardrobeCollectionFrame.ClassDropdown, "BOTTOMLEFT", 30, 20)
+		if C_AddOns.IsAddOnLoaded("ExtendedSets") then
+			WardRobeSortDropdown:SetPoint("TOPLEFT", WardrobeCollectionFrame.ClassDropdown, "TOPRIGHT")
+		else
+			WardRobeSortDropdown:SetPoint("TOPLEFT", WardrobeCollectionFrame.ClassDropdown, "BOTTOMLEFT", 30, 20)
+		end
 	else
 		WardRobeSortDropdown:SetPoint("TOPLEFT", WardrobeCollectionFrame.ClassDropdown, "BOTTOMLEFT")
 	end
